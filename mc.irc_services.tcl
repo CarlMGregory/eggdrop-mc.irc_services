@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.2
+# IRC Services v1.1.3
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.13 or greater.
 #
@@ -225,9 +225,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.2" \
+  version                "v1.1.3" \
   svs:script             "irc_services" \
-  svs:version            "001001002000" \
+  svs:version            "001001003000" \
   svs:client_version     "v4.0" \
   svs:client_svs_version "004000001000" \
   svs:server             "mc.svs.purehype.net" \
@@ -536,7 +536,7 @@ proc mc:us:need_ {channel type} {
       set temp(cmd) [list mc:us:need $channel $type]
       foreach utimer [utimers] {
         if {[lsearch -exact $utimer $temp(cmd)] == 1} {
-          killutimer $utimer [lindex $utimer 2]
+          killutimer [lindex $utimer 2]
         }
       }
       utimer 10 $temp(cmd)
@@ -551,7 +551,7 @@ proc mc:us:need_ {channel type} {
       set temp(cmd) [list mc:us:need $channel $type]
       foreach utimer [utimers] {
         if {[lsearch -exact $utimer $temp(cmd)] == 1} {
-          killutimer $utimer [lindex $utimer 2]
+          killutimer [lindex $utimer 2]
         }
       }
       utimer 10 $temp(cmd)
@@ -1127,6 +1127,10 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.3 (05.01.03)
+#  MC_8 - blood_x - Fixed bug 'wrong # args: should be "killutimer timerID"'.
+#                   Bugzilla Bug 282
+#
 # v1.1.2 (03.10.03)
 #  MC_8 - W0lF    \ - Fixed 'can't read "mc_us(need:<type>)": no such element in
 #         nonreal     array'.
