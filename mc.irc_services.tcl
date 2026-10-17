@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.6
+# IRC Services v1.1.7
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -198,8 +198,12 @@ set mc_us(:config:join_service) {
 set mc_us(:config:ignore_service_flood) "x!cservice@undernet.org"
 
 # The script sometimes caches information into a file.  Where and what do you
-# want to call this file?
-set mc_us(:config:cache_file) "./.cache.${botnet-nick}.irc_services"
+# want to call this file?  If you don't set this to a location in which the bot
+# can read and write, the bot will join the channels before it logs into the irc
+# service.  The example below will try and read/write from a file in the
+# directory in which the bot is located in.  ${botnet-nick} is replaced with
+# whatever you 'set botnet-nick' to in the eggdrop configuration file.
+set mc_us(:config:cache_file) ".cache.${botnet-nick}.irc_services"
 
 ## SVS Client (Script Version Service) v4.1.1 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
@@ -230,9 +234,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.6" \
+  version                "v1.1.7" \
   svs:script             "irc_services" \
-  svs:version            "001001006000" \
+  svs:version            "001001007000" \
   svs:client_version     "v4.1.1" \
   svs:client_svs_version "004001001000" \
   svs:server             "mc.svs.purehype.net" \
@@ -259,7 +263,7 @@ if {![info exists numversion] ||
 }
 ## ^
 
-# Error system, v4.0
+# Error Catching System (ECS), v4.1.
 proc mc:us:errchk {command args} {
   
   # Enable (1) or disable (0) auto reporting of bugs to mc8@purehype.net.
@@ -278,7 +282,7 @@ proc mc:us:errchk {command args} {
   set temp(eversion) [expr {[info exists ::version]?$::version:"-NULL-"}]
   set message "
     ************************************
-    (ECS 4.0) Error found in TCL script.
+    (ECS 4.1) Error found in TCL script.
     --------------
     Script name   : $::mc_us(script)
     Script version: $::mc_us(version)
@@ -291,7 +295,7 @@ proc mc:us:errchk {command args} {
     foreach {time command arg} $line break
     append message "\n        ${time}- $command $arg"
   }
-  append message "\n      Error stack   :"
+  append message "\n    Error stack   :"
   foreach line [split $::errorInfo \n] {
     append message "\n        $line"
   }
@@ -314,8 +318,22 @@ proc mc:us:errchk {command args} {
     return -errorcode mc.ecs.done -code error
   }
   fconfigure $sid -blocking 0 -buffering line
+
   set query [list]
-  foreach line $message {
+  # This info is passed should I need to hunt down the bot's owner for more
+  # information.
+  lappend query "Admin   : [expr {[info exists ::admin]?$::admin:""}]"
+  lappend query "Owner   : [expr {[info exists ::owner]?$::owner:""}]"
+  lappend query "Botnick : [expr {[info exists ::botnick]?$::botnick:""}]"
+  lappend query "Server  : [expr {[info exists ::server]?$::server:""}]"
+  lappend query "Channels: [join [lsort -dictionary [channels]] ", "]"
+  lappend query ""
+  
+  foreach line $message {lappend query $line}
+  lappend query "************************************"
+  
+  set new_query [list]
+  foreach line $query {
     regsub -all -- "(\002|\017|\026|\037)" $line "" line
     regsub -all -- "\003(\[0-9\]\[0-9\]?(,\[0-9\]\[0-9\]?)?)?" $line "" line
     regsub -all {\%} $line "%25" line
@@ -324,8 +342,9 @@ proc mc:us:errchk {command args} {
       scan "$toh" %c dec
       regsub -all -- "\\${toh}" $line "%[format %X $dec]" line
       incr i -1
-    }; lappend query $line
-  }
+    }; lappend new_query $line
+  }; set query $new_query
+  
   set query "message=[join $query %0a]"
   puts $sid "POST /report_bug.tcl HTTP/1.0\
            \nHost: mc.purehype.net:80\
@@ -335,7 +354,10 @@ proc mc:us:errchk {command args} {
   close $sid
 
   foreach line $message {putloglev o * $line}
-  putloglev o * "Automatically sent bug report to MC_8."
+  putloglev o * "Automatically sending bug report to MC_8."
+  putloglev o * "If you have a firewall setup, it may block the sending of this"
+  putloglev o * "report. You can check the status of your bug, as soon as MC_8"
+  putloglev o * "adds it, at http://mc.purehype.net/bugzilla/ ."
   putloglev o * "************************************"
   
   return -errorcode mc.ecs.done -code error
@@ -680,23 +702,31 @@ proc mc:us:list_ {command arg} {
           set temp(cache) ""
 
           if {[file exists $mc_us(:config:cache_file)]} {
-            set io [open $mc_us(:config:cache_file) r]
-            while {![eof $io]} {
-              gets $io channel
-              if {![validchan $channel] ||
-                  ![channel get $channel inactive]} {continue}
-              lappend temp(cache) $channel
-            }; close $io
-          }
-          set io [open $mc_us(:config:cache_file) w]
-          foreach channel [string tolower [channels]] {
-            if {![channel get $channel inactive] ||
-               [lsearch -exact [string tolower $temp(cache)] $channel] > "-1"} {
-              channel set $channel +inactive
-              puts $io $channel
+            if {catch {open $mc_us(:config:cache_file) r} io} {
+              set temp() "$mc_us(:config:cache_file): $io"
+              putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
+            } else {
+              while {![eof $io]} {
+                gets $io channel
+                if {![validchan $channel] ||
+                    ![channel get $channel inactive]} {continue}
+                lappend temp(cache) $channel
+              }; close $io
             }
           }
-          close $io
+          if {catch {open $mc_us(:config:cache_file) w} io} {
+            set temp() "$mc_us(:config:cache_file): $io"
+            putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
+          } else {
+            set temp(lcache) [string tolower $temp(cache)]
+            foreach channel [string tolower [channels]] {
+              if {![channel get $channel inactive] ||
+                  [lsearch -exact $temp(lcache) $channel] > "-1"} {
+                channel set $channel +inactive
+                puts $io $channel
+              }
+            }; close $io
+          }
 
           if {$mc_us(:config:wait_for_login:timeout)} {
             set timer_time $mc_us(:config:wait_for_login:timeout)
@@ -730,7 +760,7 @@ proc mc:us:list_ {command arg} {
         catch {unset mc_us(:cache:ison_test)}
         set mc_us(:cache:has_nick) 1
         set mc_us(:cache:ignore_303) 0
-        close [open $mc_us(:config:cache_file) w]
+        catch {close [open $mc_us(:config:cache_file) w]}
         return
       }
 
@@ -757,14 +787,19 @@ proc mc:us:list_ {command arg} {
 
     "join_channels" {
       if {[file exists $mc_us(:config:cache_file)]} {
-        set io [open $mc_us(:config:cache_file) r]
-        while {![eof $io]} {
-          gets $io channel
-          if {![validchan $channel] ||
-              ![channel get $channel inactive]} {continue}
-          channel set $channel -inactive
-        }; close $io
-      }; close [open $mc_us(:config:cache_file) w]
+        if {catch {open $mc_us(:config:cache_file) r} io} {
+          set temp() "$mc_us(:config:cache_file): $io"
+          putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
+        } else {
+          while {![eof $io]} {
+            gets $io channel
+            if {![validchan $channel] ||
+                ![channel get $channel inactive]} {continue}
+            channel set $channel -inactive
+          }; close $io
+        }
+        catch {close [open $mc_us(:config:cache_file) w]}
+      }
     }
 
     "login_failed" {
@@ -1266,6 +1301,12 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.7 (09.04.03)
+#  MC_8 - ECS - Added a catch to give a warning about not being able to open
+#               `cache_file`, instead of dumping a full bug report.  This isn't
+#               a bug, rather a misconfiguration by the user of the script.
+#  MC_8 -     - Upgraded ECS.  v4.0 -> v4.1
+#
 # v1.1.6 (09.01.03)
 #  MC_8 -     - Adjusted all timers to only set times that are even.
 #               Re: http://www.eggheads.org/bugzilla/show_bug.cgi?id=251
@@ -1273,7 +1314,7 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 #  MC_8 - ECS - Created configuration variable `cache_file`.
 #               Bugzilla Bug 336 
 #  MC_8 - ECS - Fixed 'no such channel record'.
-#              Bugzilla Bug 337 
+#               Bugzilla Bug 337 
 #
 # v1.1.5 (08.29.03)
 #  MC_8 - - If a connection to an irc server fails (or you do a .jump in the
