@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.10
+# IRC Services v1.2.1
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -318,9 +318,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.10" \
+  version                "v1.2.1" \
   svs:script             "irc_services" \
-  svs:version            "001001010000" \
+  svs:version            "001002001000" \
   svs:client_version     "v4.1.2" \
   svs:client_svs_version "004001002000" \
   svs:server             "mc.svs.purehype.net" \
@@ -1034,7 +1034,7 @@ proc mc:us:list_ {command arg} {
 
           "/raw" {
             mc:us:unlist $temp(line) command args
-            ptuserv [join $args]
+            putserv [join $args]
           }
 
           default {
@@ -1447,7 +1447,10 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
-# v1.1.10 (11.24.03)
+# v1.2.1 (11.24.03)
+#  MC_8 - ECS - Fixed 'invalid command name "ptuserv"'.
+#
+# v1.2 (11.24.03)
 #  MC_8 - ECS      - Error 'no space left on device' and 'disk quota exceeded'
 #                    will no longer be displayed as an error, rather a warning
 #                    no space left on device: hard drive is too full
