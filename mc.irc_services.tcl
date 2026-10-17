@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.4
+# IRC Services v1.1.5
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -63,7 +63,7 @@ set mc_us(:config:wait_for_login:timeout) 60
 
 # What IRC Nickname do you want before you log in?  After you log in, your
 # normal nick will be set back.  Set this to "" to disable this function.
-set mc_us(:config:wait_for_login:nick) "a"
+set mc_us(:config:wait_for_login:nick) "z"
 
 # After logged in, the script will try to find a usable nickname in the order of
 # $nick $altnick then $altnick 0-9.  Should it not be able to find a usable
@@ -226,9 +226,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.4" \
+  version                "v1.1.5" \
   svs:script             "irc_services" \
-  svs:version            "001001004000" \
+  svs:version            "001001005000" \
   svs:client_version     "v4.0.4" \
   svs:client_svs_version "004000004000" \
   svs:server             "mc.svs.purehype.net" \
@@ -415,7 +415,7 @@ proc mc:us:evnt_ {type} {
       if {$mc_us(:config:wait_for_login:nick) != ""} {
         
         if {![info exists mc_us(:cache:nick)] ||
-            ($mc_us(:cache:nick) != "")} {
+            ($mc_us(:cache:nick) == "")} {
           set mc_us(:cache:nick) $nick
         }
         if {$mc_us(:config:wait_for_login:nick) != $nick} {
@@ -425,7 +425,7 @@ proc mc:us:evnt_ {type} {
         }
         
         if {![info exists mc_us(:cache:altnick)] ||
-            ($mc_us(:cache:altnick) != "")} {
+            ($mc_us(:cache:altnick) == "")} {
           set mc_us(:cache:altnick) $altnick
         }
         if {$mc_us(:config:wait_for_login:nick) != $altnick} {
@@ -1179,6 +1179,15 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.5 (08.29.03)
+#  MC_8 - - If a connection to an irc server fails (or you do a .jump in the
+#           middle of it tring to connect), upon the next connection attempt the
+#           nick cache and altnick cache is reset to variable's
+#           `wait_for_login:nick`.  Therefor loosing totally what nick and
+#           altnick was from eggdrop's configuration file (untill next
+#           rehash/restart).  This bug would also cause it to join channels
+#           under it's temp `wait_for_login:nick` value.
+#
 # v1.1.4 (08.29.03)
 #  MC_8 - Matty        - If variable `wait_for_login:nick` is exactly same as
 #                        variable 'nick', the bot would never join channels.  It
