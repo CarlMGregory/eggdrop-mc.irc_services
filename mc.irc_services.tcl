@@ -1,7 +1,7 @@
 ##
-# IRC Services v1.1
+# IRC Services v1.1.1
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
-#  This script will only run on eggdrop 1.5.5 or greater.
+#  This script will only run on eggdrop 1.6.13 or greater.
 #
 #    R.I.P. Mom, To always be remembered; Nancy Marie Gregory.
 #
@@ -26,7 +26,7 @@
 ##
 
 ##
-# Commands (dcc)
+# Commands (DCC)
 ##
 # chanset <channel> <+/->mc.irc_services
 #   This will enable or disable this script for the specified channel.  This is
@@ -45,25 +45,25 @@
 
 # What's the username the bot is to use to log into the irc network services
 # bot?
-set mc_us(login) "username"
+set mc_us(:config:login) "username"
 
 # What's the password the bot is to use to log into the irc network services
 # bot?
-set mc_us(password) "password"
+set mc_us(:config:password) "password"
 
 # [0=no/1=yes] Do you want the bot to wait until logged in before joining it's
 # channels?
-set mc_us(wait_for_login) 1
+set mc_us(:config:wait_for_login) 1
 
 # How long, in seconds, do you want to wait for the service to state your logged
 # in before timing out and having the bots join the channels regardless?  This
 # setting is only valid if `wait_for_login` is set to 1.  Setting this to 0 will
 # represent a never ending timeout.
-set mc_us(wait_for_login:timeout) 60
+set mc_us(:config:wait_for_login:timeout) 60
 
 # What IRC Nickname do you want before you log in?  After you log in, your
 # normal nick will be set back.  Set this to "" to disable this function.
-set mc_us(wait_for_login:nick) "wait?????"
+set mc_us(:config:wait_for_login:nick) "a"
 
 # After logged in, the script will try to find a usable nickname in the order of
 # $nick $altnick then $altnick 0-9.  Should it not be able to find a usable
@@ -71,12 +71,12 @@ set mc_us(wait_for_login:nick) "wait?????"
 # nickname again?  You can set this to 0 to have it not try again, in such a
 # case it will just join even though it's nick is still set to
 # `wait_for_login:nick`.
-set mc_us(wait_for_login:wait_nick) 60
+set mc_us(:config:wait_for_login:wait_nick) 60
 
 # What's the maximum nickname length supported by the irc server the bot is
 # connecting to?
 #   Undernet uses: 9
-set mc_us(max_nick_length) 9
+set mc_us(:config:max_nick_length) 9
 
 # What raw numeric verifies that the bot is logged in?  This raw numeric must
 # be returned during the WHOIS reply, before end of whois.  Set this to "" if
@@ -86,13 +86,13 @@ set mc_us(max_nick_length) 9
 #   Dalnet uses:    307
 #   Quakenet uses:  330
 #   Undernet uses:  330
-set mc_us(verify_login) 330
+set mc_us(:config:verify_login) 330
 
 # What's the irc nickname of the service that will NOTICE you back that you have
 # logged in?
 #   Undernet uses: X
 #   Dalnet uses:   NickServ
-set mc_us(service_nick) "X"
+set mc_us(:config:service_nick) "X"
 
 # What's the irc nickname of the service that will take part in channel
 # services?  Unlike service_nick, this is the actual bot that you send requests
@@ -100,13 +100,13 @@ set mc_us(service_nick) "X"
 # uses 2 different bots for this, see the example below.
 #   Undernet uses: X
 #   Dalnet uses:   ChanServ
-set mc_us(service_chan) "X"
+set mc_us(:config:service_chan) "X"
 
 # Does the channel service ever join the channel?
 #  0 = no, 1 = yes
 #   Undernet uses: 1
 #   Dalnet uses:   0
-set mc_us(service_chan_join) 1
+set mc_us(:config:service_chan_join) 1
 
 # How do you log into the service bot?
 # -- If your using this script for Undernet's X service, you don't need to
@@ -121,7 +121,7 @@ set mc_us(service_chan_join) 1
 #     %password   - The password, set above.
 #     %botnick    - The bot's irc nick.
 #     %uhost      - The bots ident@host.
-set mc_us(how_to_login) {
+set mc_us(:config:how_to_login) {
   /msg x@channels.undernet.org login %username %password
 }
 
@@ -138,7 +138,7 @@ set mc_us(how_to_login) {
 #     %password   - The password, set above.
 #     %botnick    - The bot's irc nick.
 #     %uhost      - The bots ident@host.
-set mc_us(do_after_login) {
+set mc_us(:config:do_after_login) {
   /raw MODE %botnick +x
   /msg X set invisible on
 }
@@ -157,21 +157,21 @@ set mc_us(do_after_login) {
 #     %botnick    - The bot's irc nick.
 #     %uhost      - The bots ident@host.
 #     %channel    - The channel the need action is triggered.
-set mc_us(need:op) {
+set mc_us(:config:need:op) {
   /msg X unban %channel %botnick
   /msg X op %channel %botnick
 }
-set mc_us(need:unban) {
+set mc_us(:config:need:unban) {
   /msg X unban %channel %botnick
   /msg X invite %channel
 }
-set mc_us(need:invite) {
+set mc_us(:config:need:invite) {
   /msg X invite %channel
 }
-set mc_us(need:limit) {
+set mc_us(:config:need:limit) {
   /msg X invite %channel
 }
-set mc_us(need:key) {
+set mc_us(:config:need:key) {
   /msg X invite %channel
 }
 
@@ -187,7 +187,7 @@ set mc_us(need:key) {
 #     %botnick    - The bot's irc nick.
 #     %uhost      - The bots ident@host.
 #     %channel    - The channel the need action is triggered.
-set mc_us(join_service) {
+set mc_us(:config:join_service) {
   /msg X join %channel
 }
 
@@ -195,26 +195,16 @@ set mc_us(join_service) {
 # nick!ident@host so that I may have eggdrop just exempt the bot for flood
 # triggers.  Channel services may trigger floods due to the large amounts of
 # notices it replies with.
-set mc_us(ignore_service_flood) "x!cservice@undernet.org"
+set mc_us(:config:ignore_service_flood) "x!cservice@undernet.org"
 
 
-## SVS Client (Script Version Service) v3.2.1 ##
+## SVS Client (Script Version Service) v4.0.1 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
-# there is a newer version of this script available.  This will only notify
-# users of the new version via a note.  It's up to the owner of the bot to
-# download, adjust settings then install the script.
+# there is a newer version of this script available.  If a newer version is
+# found, the script will be auto updated.
 
-# If a newer version is found, whom do you want to notify?  The notification is
-# sent via a note.  Separate each user with a space, or set this to "" to
-# disable SVS notification.  For those whom know TCL; do not put this in list
-# format, keep it in string format.
-set mc_us(svs:notify) "MC_8"
-
-# Would you like to restrict the concept of a new version to stable releases
-# only?
-#   0 = No, inform of both stable and beta release versions.
-#   1 = Yes, inform of only stable release versions.
-set mc_us(svs:mode) 0
+# [0=no/1=yes] Do you want to enable auto updating?
+set mc_us(:config:svs:enable) 1
 
 
 #
@@ -227,22 +217,31 @@ set mc_us(svs:mode) 0
 
 #Script:mc_us
 
-set mc_us(script)      "IRC Services"
-set mc_us(version)     "v1.1"
-set mc_us(svs:script)  "irc_services"
-set mc_us(svs:version) "001001000000"
-set mc_us(svs:server)  "mc.svs.purehype.net"
-set mc_us(svs:port)    "81"
-set mc_us(svs:get)     "/index.tcl"
-set mc_us(svs:query)   \
-  "svs=$mc_us(svs:script)&version=$mc_us(svs:version)"
-
 catch {unset temp}
-if {![info exists numversion] || ($numversion < "1050500")} {
+set mc_us(info:vars) ""
+foreach {temp(name) temp(value)} [array get mc_us :config:*] {
+  lappend mc_us(info:vars) [list $temp(name) $temp(value)]
+}
+set mc_us(info:loc) [info script]
+array set mc_us [list \
+  script                 "IRC Services" \
+  version                "v1.1.1" \
+  svs:script             "irc_services" \
+  svs:version            "001001001000" \
+  svs:client_version     "v4.0" \
+  svs:client_svs_version "004000001000" \
+  svs:server             "mc.svs.purehype.net" \
+  svs:port               "81" \
+  svs:get                "/index.tcl"]
+set mc_us(svs:query)    "svs=$mc_us(svs:script)&"
+append mc_us(svs:query) "version=$mc_us(svs:version)&"
+append mc_us(svs:query) "svs_version=$mc_us(svs:client_svs_version)"
+
+if {![info exists numversion] || ($numversion < "1061300")} {
   set temp(tag) "$mc_us(script) $mc_us(version)"
-  putlog "$temp(tag) by MC_8 will only work on eggdrop 1.5.5 or greater."
-  putlog "$temp(tag)  will not work with eggdrop $version."
-  putlog "$temp(tag)  not loaded."
+ putloglev o * "$temp(tag) by MC_8 will only work on eggdrop 1.6.13 or greater."
+ putloglev o * "$temp(tag)  will not work with eggdrop $version."
+ putloglev o * "$temp(tag)  not loaded."
   return 1
 }
 
@@ -257,9 +256,9 @@ foreach temp(module) [list channels server irc] {
   if {!$temp(loaded)} {
     if {[catch {loadmodule $temp(module)} output]} {
       set temp() "$mc_us(script) $mc_us(version)"
-      putlog \
+      putloglev o * \
         "$temp() by MC_8 cannot load $temp(module) module, script load halted."
-      putlog "$temp()  loadmodule error; $output"
+      putloglev o * "$temp()  loadmodule error; $output"
       return 1
     }
   }
@@ -269,18 +268,21 @@ foreach temp(module) [list channels server irc] {
 # Error system, v3.0
 proc mc:us:error {command error arg} {
   global mc_us version lastbind errorInfo
-  putlog "Error in script $mc_us(script) $mc_us(version)."
-  putlog "    Error System: v3.0"
-  putlog "       Last Bind: [expr {[info exists lastbind]?$lastbind:"-NULL-"}]"
-  putlog "         Command: $command"
-  putlog "       Arguments: $arg"
-  putlog "       Error Msg: $error"
-  putlog "    Egg. Version: [expr {[info exists version]?$version:"-NULL-"}]"
-  putlog "     TCL Version: [info tclversion]"
-  putlog "  TCL Patchlevel: [info patchlevel]"
-  putlog "*** Please submit this bug so MC_8 can fix it.  Visit"
-  putlog "*** http://mc.purehype.net:81/bugzilla/ to properly report the bug."
-  putlog \
+  putloglev o * "Error in script $mc_us(script) $mc_us(version)."
+  putloglev o * "    Error System: v3.0"
+  putloglev o * \
+    "       Last Bind: [expr {[info exists lastbind]?$lastbind:"-NULL-"}]"
+  putloglev o * "         Command: $command"
+  putloglev o * "       Arguments: $arg"
+  putloglev o * "       Error Msg: $error"
+  putloglev o * \
+    "    Egg. Version: [expr {[info exists version]?$version:"-NULL-"}]"
+  putloglev o * "     TCL Version: [info tclversion]"
+  putloglev o * "  TCL Patchlevel: [info patchlevel]"
+  putloglev o * "*** Please submit this bug so MC_8 can fix it.  Visit"
+  putloglev o * \
+    "*** http://mc.purehype.net:81/bugzilla/ to properly report the bug."
+  putloglev o * \
     "*** Please include ALL info. in the bug report, including the next(s)."
   error $errorInfo
 }
@@ -317,14 +319,14 @@ proc mc:us:filt:status_ {index text} {
   *dcc:status [idx2hand $index] $index $text
 
   putdcc $index "$mc_us(script) $mc_us(version), status"
-  putdcc $index [format {    %-14s: %s}  Username $mc_us(login)]
+  putdcc $index [format {    %-14s: %s}  Username $mc_us(:config:login)]
   putdcc $index [format {    %-14s: %s}  Password ******]
-  set temp(1) [expr {$mc_us(wait_for_login)?"yes":"no"}]
+  set temp(1) [expr {$mc_us(:config:wait_for_login)?"yes":"no"}]
   if {$temp(1) == "yes"} {
-    if {!$mc_us(wait_for_login:timeout)} {
+    if {!$mc_us(:config:wait_for_login:timeout)} {
       append temp(1) " (timeout: never)"
     } else {
-      append temp(1) " (timeout: [duration $mc_us(wait_for_login:timeout)])"
+      append temp(1) " (timeout: [duration $mc_us(:config:wait_for_login:timeout)])"
     }
     putdcc $index [format {    %-14s: %s}  "Wait for login" $temp(1)]
   }
@@ -349,22 +351,22 @@ proc mc:us:evnt_ {type} {
     "connect-server" {
       global nick altnick
 
-      if {$mc_us(wait_for_login:nick) != ""} {
-        if {$mc_us(wait_for_login:nick) != $nick} {
+      if {$mc_us(:config:wait_for_login:nick) != ""} {
+        if {$mc_us(:config:wait_for_login:nick) != $nick} {
           if {![info exists mc_us(:cache:nick)] ||
               ($mc_us(:cache:nick) != "")} {
             set mc_us(:cache:nick) $nick
           }
-          set nik $mc_us(wait_for_login:nick)
+          set nik $mc_us(:config:wait_for_login:nick)
           while {[regexp -- {\?} $nik]} {regsub -- {\?} $nik [rand 10] nik}
           set nick $nik
         }
-        if {$mc_us(wait_for_login:nick) != $altnick} {
+        if {$mc_us(:config:wait_for_login:nick) != $altnick} {
           if {![info exists mc_us(:cache:altnick)] ||
               ($mc_us(:cache:altnick) != "")} {
             set mc_us(:cache:altnick) $altnick
           }
-          set altnick $mc_us(wait_for_login:nick)
+          set altnick $mc_us(:config:wait_for_login:nick)
         }
       }
       catch {unset mc_us(:cache:ison_test)}
@@ -399,7 +401,7 @@ proc mc:us:notc {nick uhost handle text {dest ""}} {
 }
 proc mc:us:notc {nick uhost handle text dest} {
   global mc_us
-  if {[string tolower $nick] != [string tolower $mc_us(service_nick)]} {
+  if {[string tolower $nick] != [string tolower $mc_us(:config:service_nick)]} {
     return 0
   }
   global mc_us
@@ -417,7 +419,7 @@ foreach temp(bind) [binds mc:us:raw] {
     [lindex $temp(bind) 4]
 }
 
-bind raw - $mc_us(verify_login) mc:us:raw
+bind raw - $mc_us(:config:verify_login) mc:us:raw
 bind raw - 221 mc:us:raw
 bind raw - 303 mc:us:raw
 bind raw - 318 mc:us:raw
@@ -429,13 +431,13 @@ proc mc:us:raw {from keyword text} {
   set text [split $text]
   if {![isbotnick [lindex $text 1]] && ($keyword != "221") &&
       ($keyword != "303")} {return 0}
-  if {$keyword == $mc_us(verify_login)} {set keyword "verify"}
+  if {$keyword == $mc_us(:config:verify_login)} {set keyword "verify"}
   switch -- $keyword {
-    221 {
+    "221" {
       # botname +ix
       set mc_us(:cache:umode) [lindex $text 1]
     }
-    303 {
+    "303" {
       # Ison reply.
       # botname :<current_nick> [nick1 [nick2 [nickN]]]
 
@@ -458,10 +460,10 @@ proc mc:us:raw {from keyword text} {
 
       set temp(join_chan) "proceeding with join of channels"
       if {$usable == ""} {
-        if {$mc_us(wait_for_login:wait_nick)} {
-          set temp() "trying again in $mc_us(wait_for_login:wait_nick) seconds"
+        if {$mc_us(:config:wait_for_login:wait_nick)} {
+          set temp() "trying again in $mc_us(:config:wait_for_login:wait_nick) seconds"
           putloglev o * "$mc_us(script): Usable nick not found, $temp()."
-          utimer $mc_us(wait_for_login:wait_nick) \
+          utimer $mc_us(:config:wait_for_login:wait_nick) \
             [list mc:us:list get_nick again]
           set mc_us(:cache:ignore_303) 1
           return 1
@@ -490,13 +492,13 @@ proc mc:us:raw {from keyword text} {
       mc:us:list join_channels
       return 1
     }
-    318 {
+    "318" {
       # botname botname :End of /WHOIS list.
       mc:us:list verify [expr {[info exists mc_us(:cache:whois)]?
         $mc_us(:cache:whois):"0"}]
       set mc_us(:cache:whois) 0
     }
-    verify {
+    "verify" {
       # botname botname username :is logged in as
       set mc_us(:cache:whois) 1
     }
@@ -515,40 +517,40 @@ proc mc:us:need_ {channel type} {
   set temp() [expr {($type == "limit")?"limit change":$type}]
 
   if {![mc:us:list is_logged_in]} {
-    putlog "$mc_us(script): Need $temp() in $channel, but not logged in."
+    putloglev o * "$mc_us(script): Need $temp() in $channel, but not logged in."
     return 0
   }
 
   if {[botonchan $channel]} {
-    if {$mc_us(service_chan_join) &&
-        ![onchan $mc_us(service_chan) $channel]} {
-      set temp(2) "Need $temp() in $channel; $mc_us(service_chan) is not on "
+    if {$mc_us(:config:service_chan_join) &&
+        ![onchan $mc_us(:config:service_chan) $channel]} {
+      set temp(2) "Need $temp() in $channel; $mc_us(:config:service_chan) is not on "
       append temp(2) "channel, "
-      if {[string trim $mc_us(join_service) " \t\r\n"] != ""} {
-        append temp(2) "sending $mc_us(service_chan) a join request, "
-        mc:us:list process_message [list $channel $mc_us(join_service)]
+      if {[string trim $mc_us(:config:join_service) " \t\r\n"] != ""} {
+        append temp(2) "sending $mc_us(:config:service_chan) a join request, "
+        mc:us:list process_message [list $channel $mc_us(:config:join_service)]
       }
       append temp(2) "waiting 10 seconds."
-      putlog "$mc_us(script): $temp(2)"
+      putloglev o * "$mc_us(script): $temp(2)"
 
       set temp(cmd) [list mc:us:need $channel $type]
       foreach utimer [utimers] {
-        if {[learch -exact $utimer $temp(cmd)] == 1} {
+        if {[lsearch -exact $utimer $temp(cmd)] == 1} {
           killutimer $utimer [lindex $utimer 2]
         }
       }
       utimer 10 $temp(cmd)
 
       return 0
-    } elseif {$mc_us(service_chan_join) &&
-              ![isop $mc_us(service_chan) $channel]} {
-      set temp(2) "$mc_us(service_chan) is not opped on $channel, "
+    } elseif {$mc_us(:config:service_chan_join) &&
+              ![isop $mc_us(:config:service_chan) $channel]} {
+      set temp(2) "$mc_us(:config:service_chan) is not opped on $channel, "
       append temp(2) "waiting 10 seconds."
-      putlog "$mc_us(script): $temp(2)"
+      putloglev o * "$mc_us(script): $temp(2)"
 
       set temp(cmd) [list mc:us:need $channel $type]
       foreach utimer [utimers] {
-        if {[learch -exact $utimer $temp(cmd)] == 1} {
+        if {[lsearch -exact $utimer $temp(cmd)] == 1} {
           killutimer $utimer [lindex $utimer 2]
         }
       }
@@ -559,8 +561,8 @@ proc mc:us:need_ {channel type} {
   }
 
   set temp(2) "Need $temp() in $channel, "
-  append temp(2) "sending request to $mc_us(service_chan)."
-  putlog "$mc_us(script): $temp(2)"
+  append temp(2) "sending request to $mc_us(:config:service_chan)."
+  putloglev o * "$mc_us(script): $temp(2)"
 
   mc:us:list process_message [list $channel $mc_us(need:$type)]
 
@@ -574,7 +576,7 @@ proc mc:us:flud:msg {nick uhost handle type channel} {
 }
 proc mc:us:flud:msg_ {nick uhost handle type channel} {
   global mc_us
-  set temp() [string tolower $mc_us(ignore_service_flood)]
+  set temp() [string tolower $mc_us(:config:ignore_service_flood)]
   return [expr {([string tolower $nick!$uhost] == $temp())?1:0}]
 }
 
@@ -596,8 +598,10 @@ proc mc:us:list_ {command arg} {
     "wait" {
       set cache(file) ".cache.${botnet-nick}.irc_services"
       switch -- $arg {
-        1 {
-          if {!$mc_us(wait_for_login)} {return 0}
+        "1" {
+          if {!$mc_us(:config:wait_for_login) || !$mc_us(:cache:ignore_303)} {
+            return 0
+          }
           set temp(cache) ""
 
           if {[file exists $cache(file)]} {
@@ -619,15 +623,16 @@ proc mc:us:list_ {command arg} {
           }
           close $io
 
-          if {$mc_us(wait_for_login:timeout)} {
-            utimer $mc_us(wait_for_login:timeout) [list mc:us:list login_failed]
+          if {$mc_us(:config:wait_for_login:timeout)} {
+            utimer $mc_us(:config:wait_for_login:timeout) \
+              [list mc:us:list login_failed]
           }
           return 1
         }
-        0 {
+        "0" {
           if {$server == ""} {return}
-          if {$mc_us(wait_for_login)} {
-            if {$mc_us(wait_for_login:nick) != ""} {
+          if {$mc_us(:config:wait_for_login)} {
+            if {$mc_us(:config:wait_for_login:nick) != ""} {
               mc:us:list get_nick
             } else {
               mc:us:list join_channels
@@ -640,8 +645,22 @@ proc mc:us:list_ {command arg} {
     "get_nick" {
       if {[info exists mc_us(:cache:has_nick)] ||
           (($arg != "again") && [info exists mc_us(:cache:ison_test)])} {return}
+
+      # Thanks SiD3WiNDR
+      # Must of loaded the script and did a rehash while already connected.
+      # Didn't have a chance to change it's nick and not join channels upon
+      # connecting to the server.
+      if {![info exists mc_us(:cache:nick)]} {
+        set cache(file) ".cache.${botnet-nick}.irc_services"
+        catch {unset mc_us(:cache:ison_test)}
+        set mc_us(:cache:has_nick) 1
+        set mc_us(:cache:ignore_303) 0
+        close [open $cache(file) w]
+        return
+      }
+
       global botnick
-      set end [expr $mc_us(max_nick_length)-1]
+      set end [expr $mc_us(:config:max_nick_length)-1]
       set list [list $botnick]
       lappend list [string range $mc_us(:cache:nick) 0 $end]
       lappend list [string range $mc_us(:cache:altnick) 0 $end]
@@ -662,7 +681,6 @@ proc mc:us:list_ {command arg} {
     }
 
     "join_channels" {
-      global botnet-nick
       set cache(file) ".cache.${botnet-nick}.irc_services"
       if {[file exists $cache(file)]} {
         set io [open $cache(file) r]
@@ -678,36 +696,36 @@ proc mc:us:list_ {command arg} {
     "login_failed" {
       if {![mc:us:list is_logged_in] && ($server != "")} {
         set message "Login failed"
-        if {$mc_us(wait_for_login)} {
-          if {$mc_us(wait_for_login:nick) != ""} {
+        if {$mc_us(:config:wait_for_login)} {
+          if {$mc_us(:config:wait_for_login:nick) != ""} {
             append message ", finding usable nick"
           } else {
             append message ", joining channels"
           }
         }
         append message "."
-        putlog "$mc_us(script): $message"
+        putloglev o * "$mc_us(script): $message"
         mc:us:list wait 0
       }
     }
 
     "login_verified" {
       switch -- $arg {
-        0 {
-          putlog "$mc_us(script): Login not verified."
+        "0" {
+          putloglev o * "$mc_us(script): Login not verified."
         }
-        1 {
+        "1" {
           if {![mc:us:list is_logged_in]} {
             set message "Login verified"
-            if {$mc_us(wait_for_login)} {
-              if {$mc_us(wait_for_login:nick) != ""} {
+            if {$mc_us(:config:wait_for_login) && $mc_us(:cache:ignore_303)} {
+              if {$mc_us(:config:wait_for_login:nick) != ""} {
                 append message ", finding usable nick"
               } else {
                 append message ", joining channels"
               }
             }
             append message "."
-            putlog "$mc_us(script): $message"
+            putloglev o * "$mc_us(script): $message"
           }
         }
       }
@@ -718,7 +736,7 @@ proc mc:us:list_ {command arg} {
       if {![info exists mc_us(:isloggedin)]} {set mc_us(:isloggedin) 0}
       if {$arg == "1"} {
         if {!$mc_us(:isloggedin)} {
-          mc:us:list process_message [list "" $mc_us(do_after_login)]
+          mc:us:list process_message [list "" $mc_us(:config:do_after_login)]
           mc:us:list wait 0
         }; return [set mc_us(:isloggedin) 1]
       } elseif {$arg == "0"} {
@@ -729,15 +747,15 @@ proc mc:us:list_ {command arg} {
     }
 
     "login" {
-      if {$arg != "-q"} {putlog "$mc_us(script): Sending login request."}
-      mc:us:list process_message [list "" $mc_us(how_to_login)]
+      if {$arg != "-q"} {putloglev o * "$mc_us(script): Sending login request."}
+      mc:us:list process_message [list "" $mc_us(:config:how_to_login)]
     }
 
     "verify" {
       global botnick
       switch -- $arg {
-        0 {mc:us:list login_verified 0}
-        1 {mc:us:list login_verified 1}
+        "0" {mc:us:list login_verified 0}
+        "1" {mc:us:list login_verified 1}
         default {
           putserv "WHOIS $botnick"
           putserv "MODE $botnick"
@@ -769,13 +787,14 @@ proc mc:us:list_ {command arg} {
             set args [join $args]
           }
           default {
-            putlog "$mc_us(script): Invalid command; [join $temp(line)]"
+            set temp(a) "Invalid command ([lindex $temp(line) 0])"
+            putloglev o * "$mc_us(script): $temp(a); [join $temp(line)]"
             continue
           }
         }
         set args [mc:us:replace -- $args [list \
-          %username $mc_us(login) \
-          %password $mc_us(password) \
+          %username $mc_us(:config:login) \
+          %password $mc_us(:config:password) \
           %botnick  $botnick \
           %uhost    $temp(uhost) \
           %channel  $channel]]
@@ -938,143 +957,169 @@ if {![mc:us:list is_logged_in]} {
 }
 
 
-## SVS v3.2.1
-set mc_us(svs:client_version) "v3.2.1"
-if {![info exists mc_us(svs:mode)] ||
-    ![regexp -- {^(1|0)$} $mc_us(svs:mode)]} {
-  set mc_us(svs:mode) 0
-}
-if {![info exists mc_us(svs:notify)]} {
-  if {![info exists owner]} {set owner ""}
-  set mc_us(svs:notify) $owner
+## SVS insert (post code)
+if {![info exists mc_us(:config:svs:enable)] ||
+    ![string match {[01]} $mc_us(:config:svs:enable)]} {
+  set mc_us(:config:svs:enable) 0
 }
 
 bind time - "00 00 *" mc:us:do_svs
 proc mc:us:do_svs {{args ""}} {
   global mc_us
-  mc:us:do_svs_ $mc_us(svs:server) $mc_us(svs:port) $mc_us(svs:get)
+  set query $mc_us(svs:query)
+  if {$args == ""} {append query "&log=0"}
+  set index [connect $mc_us(svs:server) $mc_us(svs:port)]
+  putdcc $index "GET $mc_us(svs:get)?$query HTTP/1.0\n"
+  putdcc $index "Host: $mc_us(svs:server):$mc_us(svs:port)\n\n"
+  control $index mc:us:svs_talk
 }
 
-proc mc:us:do_svs_ {svs_server svs_port svs_get} {
+proc mc:us:svs_talk {index text} {
   global mc_us
-  if {[catch {
-          socket -async $svs_server $svs_port
-             } sid]} {
-    putloglev d * "$mc_us(script): SVS socket error: $sid"
+  set header [list svs header $index]
+  set memory [list svs memory $index]
+  if {$text == ""} {
+    catch {unset mc_us($header)}
+    catch {unset mc_us($memory)}
     return 1
   }
-
-  fconfigure $sid -blocking 1 -buffering line
-  set tout \
-    [after 60000 "mc:us:svs_talk $sid timeout $svs_server $svs_port"]
-  fileevent $sid readable "mc:us:svs_talk $sid $tout"
-  puts $sid "GET $svs_get?$mc_us(svs:query) HTTP/1.0\
-           \nHost: $svs_server:$svs_port\n"
-  flush $sid
-}
-
-proc mc:us:svs_talk {sid tout {svs_server ""} {svs_port ""}} {
-  global mc_us
-  set array [list svs temp $sid]
-  if {$tout == "timeout"} {
-    set temp(1) "$svs_server:$svs_port"
-    putloglev d * \
-      "$mc_us(script): SVS Warning: Timed out connecting to $temp(1)."
-    catch {unset mc_us($array)}
-    close $sid
+  set text [split $text]
+  set rfc [lindex $text 0]
+  set text [join [lrange $text 1 end]]
+  if {![info exist mc_us($header)]} {
+    if {$rfc == "002"} {
+      # Done with http header and useless information.
+      if {!$mc_us(:config:svs:enable)} {
+        catch {unset mc_us($header)}
+        catch {unset mc_us($memory)}
+        return 1
+      }
+      set mc_us($header) 1
+    }
     return 0
   }
-  if {[eof $sid]} {
-    catch {unset mc_us($array)}
-    close $sid
-    return 1
-  }
-  gets $sid get
-  after cancel $tout
-  if {![info exist mc_us($array)]} {
-    if {$get == ""} {set mc_us($array) 1}
-    return -1
-  }
-  if {($get == "") || [catch {llength $get}]} {
-    return -2
-  }
-  switch -- [lindex $get 0] {
+  switch -- $rfc {
+
+    001 {return 0}
+    002 {return 0}
+    003 {return 0}
+
+    010 {
+      if {$text != $mc_us(svs:script)} {
+        set temp(1) "wanted $mc_us(svs:script), got $temp(text:0)"
+        putloglev d * "$mc_us(script): SVS Error: $temp(1)"
+        catch {unset mc_us($header)}
+        catch {unset mc_us($memory)}
+        return 1
+      }
+      return 0
+    }
+
+    011 {return 0}
+    012 {return 0}
+    013 {return 0}
+    014 {return 0}
+    017 {return 0}
+
+    004 {
+      if {[info exists mc_us($memory)]} {
+        set file $mc_us(info:loc)~new
+        set temp(vars) $mc_us(info:vars)
+        set io [open $file w]
+        for {set i 0} {$i <= [llength $mc_us($memory)]} {incr i} {
+          set line [lindex $mc_us($memory) $i]
+          set regexp {^[; ]*set mc_us\((:config:[^)]*)\) *(.?)}
+          if {[regexp -- $regexp $line -> name type]} {
+            set continue 0
+            foreach item $temp(vars) {
+              set item_name [lindex $item 0]
+              set item_value [lindex $item 1]
+              if {$name != $item_name} {continue}
+              set index [lsearch -exact $temp(vars) $item]
+              set temp(vars) [lreplace $temp(vars) $index $index]
+              puts $io [list set mc_us($name) $item_value]
+              if {$type == "\{"} {
+                while {1} {
+                  if {[regexp -- {\}(?:;* *(.*))?} $line -> extra]} {
+                    if {$extra != ""} {
+                      puts $io $extra
+                    }
+                    break
+                  }
+                  incr i
+                  set line [lindex $mc_us($memory) $i]
+                }
+                puts $io ""
+              } elseif {$type == "\""} {
+                regsub -- {"} $line "" line
+                while {1} {
+                  if {[regexp -- {[^\\]"(?:;* *(.*))?} $line -> extra] ||
+                      [regexp -- {^"(?:;* *(.*))?} $line -> extra]} {
+                    if {$extra != ""} {
+                      puts $io $extra
+                    }
+                    break
+                  }
+                  incr i
+                  set line [lindex $mc_us($memory) $i]
+                }
+                puts $io ""
+              }
+              set continue 1
+              break
+            }
+            if {$continue} {continue}
+          }
+          puts $io $line
+        }
+        close $io
+        set file $mc_us(info:loc)
+        putloglev o * "$mc_us(script): Auto update testing new script..."
+        if {[catch {uplevel "source $file~new"} error]} {
+          file delete -force -- $file~new
+          putloglev o * "$mc_us(script): Auto update failed: $error"
+          putloglev o * "$mc_us(script): Auto update loading previous script."
+          uplevel "source $file"
+        } else {
+          file rename -force -- $file~new $file
+          putloglev o * "$mc_us(script): Auto update test good, reloading."
+          uplevel "source $file"
+        }
+      }
+
+      catch {unset mc_us($header)}
+      catch {unset mc_us($memory)}
+      return 1
+    }
+
     200 {
-      set temp(host) [lindex $get 1]
-      set temp(port) [lindex $get 2]
-      set temp(get) [lindex $get 3]
+      set temp(host) [lindex $text 1]
+      set temp(port) [lindex $text 2]
+      set temp(get)  [lindex $text 3]
       set temp(cache) "$temp(host) at $temp(port)"
       putloglev d * \
         "$mc_us(script): SVS is being redirected to $temp(cache)."
-      mc:us:do_svs_ $temp(host) $temp(port) $temp(get)
-      close $sid
-      return 200
+      utimer 5 [list mc:us:do_svs_ $temp(host) $temp(port) $temp(get)]
+      catch {unset mc_us($header)}
+      catch {unset mc_us($memory)}
+      return 1
     }
-    003 {
-      set temp(reply) [lrange $get 1 end]
-      for {set number 0} {$number <= 5} {incr number} {
-        set temp(reply:$number) [lindex $temp(reply) $number]
-      }
-      if {$temp(reply:0) != $mc_us(svs:script)} {
-        set temp(1) "wanted $mc_us(svs:script), got $temp(reply:0)"
-        putloglev d * "$mc_us(script): SVS Error: $temp(1)"
-        unset mc_us($array)
-        close $sid
-        return -3
-      }
-      if {$mc_us(svs:mode)} {
-        set temp(svs:version) [string range $mc_us(svs:version) 0 8]999
-      } else {
-        set temp(svs:version) [string range $mc_us(svs:version) 0 11]
-      }
-      if {$temp(reply:1) > $temp(svs:version)} {
-        set temp(note) $temp(reply:5)
-        regsub -all -- %0 $temp(note) $temp(reply:0) temp(note)
-        regsub -all -- %1 $temp(note) $temp(reply:1) temp(note)
-        regsub -all -- %2 $temp(note) $temp(reply:2) temp(note)
-        regsub -all -- %3 $temp(note) $temp(reply:3) temp(note)
-        regsub -all -- %4 $temp(note) $temp(reply:4) temp(note)
-        regsub -all -- %version $temp(note) $mc_us(version) temp(note)
-        foreach temp(to) [split $mc_us(svs:notify) ",; "] {
-          if {[string trim $temp(to)] == ""} {continue}
-          regsub -- %nick $temp(note) $temp(to) temp(note2)
-          set temp(lunotes) [notes $temp(to) -[notes $temp(to)]]]
-          if {[string match *$temp(note2)* $temp(lunotes)]} {
-            set temp(found_note) 0
-            foreach temp(unote) $temp(lunotes) {
-              if {$temp(note2) == [lindex $temp(unote) 2]} {
-                set temp(found_note) 1
-                break
-              }
-            }
-            if {$temp(found_note)} {continue}
-          }
-          set temp(error) "sending note to $temp(to) -> "
-          switch -- [sendnote SVS $temp(to) $temp(note2)] {
-            0 {
-              if {![validuser $temp(to)]} {
-                append temp(error) "invalid user"
-              } else {append temp(error) "unknown error"}
-              putloglev d * \
-                "$mc_us(script): SVS sendnote error: $temp(error)"
-            }
-            3 {
-              append temp(error) "notebox too full"
-              putloglev d * \
-                "$mc_us(script): SVS sendnote error: $temp(error)"
-            }
-          }
-        }
-      }
-      unset mc_us($array)
-      close $sid
-      return 2
+
+    300 {
+      lappend mc_us($memory) $text
+      return 0
     }
+
   }
 }
+catch {unset index}
+if {![info exists mc_loaded]} {set mc_loaded(scripts) ""}
+set index [lsearch -exact $mc_loaded(scripts) mc_us]
+lreplace mc_loaded(scripts) $index $index mc_us
 ## ^
 
-putloglev * o "$mc_us(script) $mc_us(version) by MC_8 loaded."
+
+putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 
 #
 ##
@@ -1082,6 +1127,14 @@ putloglev * o "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.1 (03.09.03)
+#  MC_8 - SiD3WiNDR - Fixed 'can't read "mc_us(:cache:nick)": no such element
+#                     in array'.
+#  MC_8 -           - Fixed putlog levels.
+#  MC_8 -           - Upgraded SVS Client.  v3.2.1 -> v4.0.1
+#  MC_8 - christian - Fixed 'invalid command name "learch"'.
+#                     Bugzilla Bug 260
+#
 # v1.1 (02.12.03)
 #  MC_8 -            - Upgraded SVS Client, made it smaller. v3.1.1 -> v3.2.1
 #  MC_8 -            - Added `wait_for_login:wait_nick` variable.
@@ -1135,7 +1188,7 @@ putloglev * o "$mc_us(script) $mc_us(version) by MC_8 loaded."
 #  MC_8  -          - Rewrote most of the script.  Now supports non English X
 #                     replies.  Also verify's that it's logged-in in a more RFC
 #                     fashion.
-#  MC_8  -          - Added `status` dcc command report.
+#  MC_8  -          - Added `status` DCC command report.
 #  MC_8  -          - Added `wait_for_login` and `wait_for_login:timeout`
 #                     configuration variable.
 #  MC_8  - BarkerJr - Fixed issue with multi bots in same directory running same
