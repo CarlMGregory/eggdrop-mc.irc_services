@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.1
+# IRC Services v1.1.2
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.13 or greater.
 #
@@ -225,9 +225,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.1" \
+  version                "v1.1.2" \
   svs:script             "irc_services" \
-  svs:version            "001001001000" \
+  svs:version            "001001002000" \
   svs:client_version     "v4.0" \
   svs:client_svs_version "004000001000" \
   svs:server             "mc.svs.purehype.net" \
@@ -564,7 +564,7 @@ proc mc:us:need_ {channel type} {
   append temp(2) "sending request to $mc_us(:config:service_chan)."
   putloglev o * "$mc_us(script): $temp(2)"
 
-  mc:us:list process_message [list $channel $mc_us(need:$type)]
+  mc:us:list process_message [list $channel $mc_us(:config:need:$type)]
 
   return 1
 }
@@ -1127,6 +1127,11 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.2 (03.10.03)
+#  MC_8 - W0lF    \ - Fixed 'can't read "mc_us(need:<type>)": no such element in
+#         nonreal     array'.
+#                     Bugzilla Bug 277
+#
 # v1.1.1 (03.09.03)
 #  MC_8 - SiD3WiNDR - Fixed 'can't read "mc_us(:cache:nick)": no such element
 #                     in array'.
