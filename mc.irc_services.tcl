@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.7
+# IRC Services v1.1.8
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -234,9 +234,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.7" \
+  version                "v1.1.8" \
   svs:script             "irc_services" \
-  svs:version            "001001007000" \
+  svs:version            "001001008000" \
   svs:client_version     "v4.1.1" \
   svs:client_svs_version "004001001000" \
   svs:server             "mc.svs.purehype.net" \
@@ -702,7 +702,7 @@ proc mc:us:list_ {command arg} {
           set temp(cache) ""
 
           if {[file exists $mc_us(:config:cache_file)]} {
-            if {catch {open $mc_us(:config:cache_file) r} io} {
+            if {[catch {open $mc_us(:config:cache_file) r} io]} {
               set temp() "$mc_us(:config:cache_file): $io"
               putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
             } else {
@@ -714,7 +714,7 @@ proc mc:us:list_ {command arg} {
               }; close $io
             }
           }
-          if {catch {open $mc_us(:config:cache_file) w} io} {
+          if {[catch {open $mc_us(:config:cache_file) w} io]} {
             set temp() "$mc_us(:config:cache_file): $io"
             putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
           } else {
@@ -787,7 +787,7 @@ proc mc:us:list_ {command arg} {
 
     "join_channels" {
       if {[file exists $mc_us(:config:cache_file)]} {
-        if {catch {open $mc_us(:config:cache_file) r} io} {
+        if {[catch {open $mc_us(:config:cache_file) r} io]} {
           set temp() "$mc_us(:config:cache_file): $io"
           putloglev o * "$mc_us(script): WARNING, cannot open $temp()"
         } else {
@@ -1301,6 +1301,9 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.8 (09.04.03)
+#  MC_8 - ECS - Fixed 'syntax error in expression "catch ...'.
+#
 # v1.1.7 (09.04.03)
 #  MC_8 - ECS - Added a catch to give a warning about not being able to open
 #               `cache_file`, instead of dumping a full bug report.  This isn't
