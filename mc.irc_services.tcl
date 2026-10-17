@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.5
+# IRC Services v1.1.6
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -197,7 +197,11 @@ set mc_us(:config:join_service) {
 # notices it replies with.
 set mc_us(:config:ignore_service_flood) "x!cservice@undernet.org"
 
-## SVS Client (Script Version Service) v4.0.4 ##
+# The script sometimes caches information into a file.  Where and what do you
+# want to call this file?
+set mc_us(:config:cache_file) "./.cache.${botnet-nick}.irc_services"
+
+## SVS Client (Script Version Service) v4.1.1 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
 # there is a newer version of this script available.  If a newer version is
 # found, the script will be auto updated.
@@ -226,11 +230,11 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.5" \
+  version                "v1.1.6" \
   svs:script             "irc_services" \
-  svs:version            "001001005000" \
-  svs:client_version     "v4.0.4" \
-  svs:client_svs_version "004000004000" \
+  svs:version            "001001006000" \
+  svs:client_version     "v4.1.1" \
+  svs:client_svs_version "004001001000" \
   svs:server             "mc.svs.purehype.net" \
   svs:port               "80" \
   svs:get                "/index.tcl"]
@@ -248,7 +252,10 @@ if {![info exists numversion] ||
     "$temp(tag) by MC_8 will only work on eggdrop 1.6.14 (stable) or greater."
   putloglev o * "$temp(tag) will not work with eggdrop $version."
   putloglev o * "$temp(tag) not loaded."
-  return 1
+  uplevel #0 {
+    if {[info exists temp] && ![array exists temp]} {unset temp}
+    set temp(svs_return) [list 0 "Need to upgrade eggdrop."]
+  }; return 1
 }
 ## ^
 
@@ -528,8 +535,9 @@ proc mc:us:raw_ {from keyword text} {
           set temp() \
             "trying again in $mc_us(:config:wait_for_login:wait_nick) seconds"
           putloglev o * "$mc_us(script): Usable nick not found, $temp()."
-          utimer $mc_us(:config:wait_for_login:wait_nick) \
-            [list mc:us:list get_nick again]
+          set timer_time $mc_us(:config:wait_for_login:wait_nick)
+          if {[regexp -- {[13579]$} $timer_time]} {incr timer_time}
+          utimer $timer_time [list mc:us:list get_nick again]
           set mc_us(:cache:ignore_303) 1
           return 1
         }
@@ -576,7 +584,8 @@ proc mc:us:need {channel type} {
 }
 proc mc:us:need_ {channel type} {
   global mc_us botnick
-  if {![channel get $channel mc.irc_services]} {return 0}
+  if {![validchan $channel] ||
+      ![channel get $channel mc.irc_services]} {return 0}
 
   set temp() [expr {($type == "limit")?"limit change":$type}]
 
@@ -663,7 +672,6 @@ proc mc:us:list_ {command arg} {
   global mc_us botnet-nick server
   switch -- $command {
     "wait" {
-      set cache(file) ".cache.${botnet-nick}.irc_services"
       switch -- $arg {
         "1" {
           if {!$mc_us(:config:wait_for_login) || !$mc_us(:cache:ignore_303)} {
@@ -671,8 +679,8 @@ proc mc:us:list_ {command arg} {
           }
           set temp(cache) ""
 
-          if {[file exists $cache(file)]} {
-            set io [open $cache(file) r]
+          if {[file exists $mc_us(:config:cache_file)]} {
+            set io [open $mc_us(:config:cache_file) r]
             while {![eof $io]} {
               gets $io channel
               if {![validchan $channel] ||
@@ -680,7 +688,7 @@ proc mc:us:list_ {command arg} {
               lappend temp(cache) $channel
             }; close $io
           }
-          set io [open $cache(file) w]
+          set io [open $mc_us(:config:cache_file) w]
           foreach channel [string tolower [channels]] {
             if {![channel get $channel inactive] ||
                [lsearch -exact [string tolower $temp(cache)] $channel] > "-1"} {
@@ -691,8 +699,9 @@ proc mc:us:list_ {command arg} {
           close $io
 
           if {$mc_us(:config:wait_for_login:timeout)} {
-            utimer $mc_us(:config:wait_for_login:timeout) \
-              [list mc:us:list login_failed]
+            set timer_time $mc_us(:config:wait_for_login:timeout)
+            if {[regexp -- {[13579]$} $timer_time]} {incr timer_time}
+            utimer $timer_time [list mc:us:list login_failed]
           }
           return 1
         }
@@ -718,11 +727,10 @@ proc mc:us:list_ {command arg} {
       # Didn't have a chance to change it's nick and not join channels upon
       # connecting to the server.
       if {![info exists mc_us(:cache:nick)]} {
-        set cache(file) ".cache.${botnet-nick}.irc_services"
         catch {unset mc_us(:cache:ison_test)}
         set mc_us(:cache:has_nick) 1
         set mc_us(:cache:ignore_303) 0
-        close [open $cache(file) w]
+        close [open $mc_us(:config:cache_file) w]
         return
       }
 
@@ -748,16 +756,15 @@ proc mc:us:list_ {command arg} {
     }
 
     "join_channels" {
-      set cache(file) ".cache.${botnet-nick}.irc_services"
-      if {[file exists $cache(file)]} {
-        set io [open $cache(file) r]
+      if {[file exists $mc_us(:config:cache_file)]} {
+        set io [open $mc_us(:config:cache_file) r]
         while {![eof $io]} {
           gets $io channel
           if {![validchan $channel] ||
               ![channel get $channel inactive]} {continue}
           channel set $channel -inactive
         }; close $io
-      }; close [open $cache(file) w]
+      }; close [open $mc_us(:config:cache_file) w]
     }
 
     "login_failed" {
@@ -1001,7 +1008,7 @@ proc mc:us:replace {{args ""}} {
 # This here for, if you realize you had the wrong username or password -- you
 # can change it in the script and rehash without having to restart or jump.
 if {![mc:us:list is_logged_in]} {
-  utimer 1 [list mc:us:evnt init-server]
+  utimer 2 [list mc:us:evnt init-server]
 }
 
 ## SVS insert (post code)
@@ -1026,28 +1033,43 @@ proc mc:us:do_svs {{args ""}} {
   control $ind mc:us:svs_talk
 }
 
+proc mc:us:svs_memory {action} {
+  global mc_us
+  switch -- $action {
+    
+    "setup" {
+      upvar index index
+      foreach _item [list header memory rfc_memory] {
+        upvar $_item $_item
+        set $_item [list svs $_item $index]
+      }
+    }
+    
+    "remove" {
+      upvar index index
+      mc:us:svs_memory setup
+      catch {unset mc_us($header)}
+      catch {unset mc_us($memory)}
+      foreach _item [array names mc_us $rfc_memory:*] {
+        unset mc_us($_item)
+      }
+    }
+
+  }
+}
+
 proc mc:us:svs_talk {index text} {
   global mc_us
-  set header [list svs header $index]
-  set memory [list svs memory $index]
+  mc:us:svs_memory setup
   if {$text == ""} {
-    catch {unset mc_us($header)}
-    catch {unset mc_us($memory)}
+    mc:us:svs_memory remove
     return 1
   }
   set text [split $text]
   set rfc [lindex $text 0]
   set text [join [lrange $text 1 end]]
-  if {![info exist mc_us($header)]} {
-    if {$rfc == "002"} {
-      # Done with http header and useless information.
-      if {!$mc_us(:config:svs:enable)} {
-        catch {unset mc_us($header)}
-        catch {unset mc_us($memory)}
-        return 1
-      }
-      set mc_us($header) 1
-    }
+  if {![info exists mc_us($header)]} {
+    if {$rfc == "002"} {set mc_us($header) 1}
     return 0
   }
   switch -- $rfc {
@@ -1058,22 +1080,61 @@ proc mc:us:svs_talk {index text} {
 
     010 {
       if {$text != $mc_us(svs:script)} {
-        set temp(1) "wanted $mc_us(svs:script), got $temp(text:0)"
+        set temp(1) "wanted $mc_us(svs:script), got $text"
         putloglev d * "$mc_us(script): SVS Error: $temp(1)"
-        catch {unset mc_us($header)}
-        catch {unset mc_us($memory)}
+        mc:us:svs_memory remove
         return 1
       }
+      if {$mc_us(:config:svs:enable)} {return 0}
+      set mc_us($rfc_memory:[string index $rfc end]) $text
       return 0
     }
 
-    011 {return 0}
-    012 {return 0}
-    013 {return 0}
-    014 {return 0}
-    017 {return 0}
+    011 {
+      if {$mc_us(:config:svs:enable)} {return 0}
+      set mc_us($rfc_memory:[string index $rfc end]) $text
+      return 0
+    }
+      
+    012 {
+      if {$mc_us(:config:svs:enable)} {return 0}
+      set mc_us($rfc_memory:[string index $rfc end]) $text
+      return 0
+    }
+    
+    013 {
+      if {$mc_us(:config:svs:enable)} {return 0}
+      set mc_us($rfc_memory:[string index $rfc end]) $text
+      return 0
+    }
+    
+    014 {
+      if {$mc_us(:config:svs:enable)} {return 0}
+      set mc_us($rfc_memory:[string index $rfc end]) $text
+      return 0
+    }
+    
+    017 {
+      if {$mc_us(:config:svs:enable)} {return 0}
+      if {$text == ""} {
+        set text "Newer version of this script exists."
+      }
+      foreach number [list 0 1 2 3 4] {
+        if {![info exists mc_us($rfc_memory:$number)]} {continue}
+        regsub -all -- %$number $text $mc_us($rfc_memory:$number) text
+      }
+      putloglev o * "SVS, $mc_us(script): $text"
+      mc:us:svs_memory remove
+      return 1
+    }
 
     004 {
+      # Quit.
+      if {!$mc_us(:config:svs:enable)} {
+        mc:us:svs_memory remove
+        return 1
+      }
+        
       if {[info exists mc_us($memory)]} {
         set file $mc_us(info:loc)~new
         set temp(vars) $mc_us(info:vars)
@@ -1087,8 +1148,9 @@ proc mc:us:svs_talk {index text} {
               set item_name [lindex $item 0]
               set item_value [lindex $item 1]
               if {$name != $item_name} {continue}
-              set index [lsearch -exact $temp(vars) $item]
-              set temp(vars) [lreplace $temp(vars) $index $index]
+              set lsearch_index [lsearch -exact $temp(vars) $item]
+              set temp(vars) \
+                [lreplace $temp(vars) $lsearch_index $lsearch_index]
               puts $io [list set mc_us($name) $item_value]
               if {$type == "\{"} {
                 while {1} {
@@ -1127,21 +1189,45 @@ proc mc:us:svs_talk {index text} {
         close $io
         set file $mc_us(info:loc)
         putloglev o * "$mc_us(script): Auto update testing new script..."
-        if {[catch {uplevel "source $file~new"} error]} {
+        if {[catch {uplevel "source $file~new"}]} {
           file delete -force -- $file~new
-          putloglev o * "$mc_us(script): Auto update failed: $error"
+          putloglev o * "$mc_us(script): Auto update failed:"
           putloglev o * $::errorInfo
-          putloglev o * "$mc_us(script): Auto update loading previous script."
+          putloglev o * \
+            "$mc_us(script): Loading previous script version..."
           uplevel "source $file"
         } else {
-          file rename -force -- $file~new $file
-          putloglev o * "$mc_us(script): Auto update test good, reloading."
-          uplevel "source $file"
+          upvar #0 temp upvar_temp
+          if {[info exists upvar_temp(svs_return)]} {
+            set temp(return_code) [lindex $upvar_temp(svs_return) 0]
+            set temp(return_arg) [lindex $upvar_temp(svs_return) 1]
+            
+            if {!$temp(return_code)} {
+              file delete -force -- $file~new
+              set temp() "message from new version: $temp(return_arg)"
+              putloglev o * "$mc_us(script): Auto update failed, $temp()"
+              putloglev o * \
+                "$mc_us(script): Loading previous script version..."
+              uplevel "source $file"
+            } else {
+              file rename -force -- $file~new $file
+              set temp() "good, message from new version: $temp(return_arg)"
+              putloglev o * "$mc_us(script): Auto update test $temp()"
+              putloglev o * \
+                "$mc_us(script): Moving and reloading new version..."
+              uplevel "source $file"
+            }
+          } else {
+            file rename -force -- $file~new $file
+            putloglev o * "$mc_us(script): Auto update test good."
+            putloglev o * \
+              "$mc_us(script): Moving and reloading new version..."
+            uplevel "source $file"
+          }
         }
       }
 
-      catch {unset mc_us($header)}
-      catch {unset mc_us($memory)}
+      mc:us:svs_memory remove
       return 1
     }
 
@@ -1152,23 +1238,24 @@ proc mc:us:svs_talk {index text} {
       set temp(cache) "$temp(host) at $temp(port)"
       putloglev d * \
         "$mc_us(script): SVS is being redirected to $temp(cache)."
-      utimer 5 [list mc:us:do_svs_ $temp(host) $temp(port) $temp(get)]
-      catch {unset mc_us($header)}
-      catch {unset mc_us($memory)}
+      utimer 6 [list mc:us:do_svs_ $temp(host) $temp(port) $temp(get)]
+      mc:us:svs_memory remove
       return 1
     }
 
     300 {
-      lappend mc_us($memory) $text
-      return 0
+      if {$mc_us(:config:svs:enable)} {
+        lappend mc_us($memory) $text
+      }; return 0
     }
 
   }
 }
 catch {unset index}
-if {![info exists mc_loaded]} {set mc_loaded(scripts) ""}
+if {![info exists mc_loaded]} {set mc_loaded(scripts) [list]}
+if {![array exists mc_loaded]} {unset mc_loaded; set mc_loaded(scripts) [list]}
 set index [lsearch -exact $mc_loaded(scripts) mc_us]
-lreplace mc_loaded(scripts) $index $index mc_us
+set mc_loaded(scripts) [lreplace $mc_loaded(scripts) $index $index mc_us]
 ## ^
 
 putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
@@ -1179,6 +1266,15 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.6 (09.01.03)
+#  MC_8 -     - Adjusted all timers to only set times that are even.
+#               Re: http://www.eggheads.org/bugzilla/show_bug.cgi?id=251
+#  MC_8 -     - Upgraded SVS client.  v4.0.4 -> v4.1.1
+#  MC_8 - ECS - Created configuration variable `cache_file`.
+#               Bugzilla Bug 336 
+#  MC_8 - ECS - Fixed 'no such channel record'.
+#              Bugzilla Bug 337 
+#
 # v1.1.5 (08.29.03)
 #  MC_8 - - If a connection to an irc server fails (or you do a .jump in the
 #           middle of it tring to connect), upon the next connection attempt the
