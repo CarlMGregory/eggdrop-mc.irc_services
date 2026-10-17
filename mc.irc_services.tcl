@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.2.1
+# IRC Services v1.2.2
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -278,7 +278,7 @@ set mc_us(:config:join_service) {
 # To avoid eggdrop putting the services bot on ignore, please specify it's
 # nick!ident@host so that I may have eggdrop just exempt the bot for flood
 # triggers.  Channel services may trigger floods due to the large amounts of
-# notices it replies with.
+# notices it replies with.  Wildcards accepted.
 set mc_us(:config:ignore_service_flood) "x!cservice@undernet.org"
 
 # The script sometimes caches information into a file.  Where and what do you
@@ -318,9 +318,9 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.2.1" \
+  version                "v1.2.2" \
   svs:script             "irc_services" \
-  svs:version            "001002001000" \
+  svs:version            "001002002000" \
   svs:client_version     "v4.1.2" \
   svs:client_svs_version "004001002000" \
   svs:server             "mc.svs.purehype.net" \
@@ -789,7 +789,7 @@ proc mc:us:flud:msg {nick uhost handle type channel} {
 proc mc:us:flud:msg_ {nick uhost handle type channel} {
   global mc_us
   set temp() [string tolower $mc_us(:config:ignore_service_flood)]
-  return [expr {([string tolower $nick!$uhost] == $temp())?1:0}]
+  return [expr {([string match $temp() [string tolower $nick!$uhost]])?1:0}]
 }
 
 bind time - * mc:us:time
@@ -1447,6 +1447,9 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.2.2 (03.25.03)
+#  MC_8 - NeVeRCLR - `ignore_service_flood` now supports wildcards.
+#
 # v1.2.1 (11.24.03)
 #  MC_8 - ECS - Fixed 'invalid command name "ptuserv"'.
 #
