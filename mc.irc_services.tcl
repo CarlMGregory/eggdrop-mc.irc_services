@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.0
+# IRC Services v1.1
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.5.5 or greater.
 #
@@ -10,26 +10,31 @@
 ##
 
 ##
-# This will allow your bot to interface with an IRC servers's channel services.
-# This should work fine with QuakeNet/ Dalnet/ Undernet.  Many ask, can this be
-# used for Undernet's new +x, yes.. it can.
+# This will allow your bot to interface with an IRC servers' channel services.
+# This should work fine with QuakeNet/ Dalnet/ Undernet and probably others.
+# Many ask, can this be used for Undernet's new +x, yes.. it can.
 #
 # You register with Undernet via;
 #   http://cservice.undernet.org/live/
 #
 # For best results for Undernet usage,
-#   1) Ensure your bot has an access level of 399 or greater.
-#   2) Ensure X is always on the channel, don't /msg x part the bot!
+#   1) Ensure your bot has an access level of 399 or greater.  Such a high
+#      access only needed for the `join_service` variable you will read about
+#      below, assuming your using the default command already in place.  You
+#      don't need to give the bot that high of access if you intend to never use
+#      that variable's default command.
 ##
 
 ##
 # Commands (dcc)
 ##
 # chanset <channel> <+/->mc.irc_services
-#   This will enable or disable this script for the specified channel.
+#   This will enable or disable this script for the specified channel.  This is
+#   only for the `need:*` variables.  The script still logs in as it should
+#   regardless of what you set any channel to.
 #
 # status
-#   This will show the normal status fore core eggdrop, but also appends the
+#   This will show the normal status for core eggdrop, but also appends the
 #   status of the script.
 ##
 
@@ -38,10 +43,12 @@
 ##
 #
 
-# What's the login?
+# What's the username the bot is to use to log into the irc network services
+# bot?
 set mc_us(login) "username"
 
-# What's the password?
+# What's the password the bot is to use to log into the irc network services
+# bot?
 set mc_us(password) "password"
 
 # [0=no/1=yes] Do you want the bot to wait until logged in before joining it's
@@ -55,10 +62,21 @@ set mc_us(wait_for_login) 1
 set mc_us(wait_for_login:timeout) 60
 
 # What IRC Nickname do you want before you log in?  After you log in, your
-# normal nick will be set back.  Set this to "" to disable this function.  This
-# is exactly like 'set nick' in the configs file, therefor it will handle ?'s
-# for random characters.
-set mc_us(wait_for_login:nick) "awaiting"
+# normal nick will be set back.  Set this to "" to disable this function.
+set mc_us(wait_for_login:nick) "wait?????"
+
+# After logged in, the script will try to find a usable nickname in the order of
+# $nick $altnick then $altnick 0-9.  Should it not be able to find a usable
+# nickname, how long (in seconds) should it wait before trying to find a usable
+# nickname again?  You can set this to 0 to have it not try again, in such a
+# case it will just join even though it's nick is still set to
+# `wait_for_login:nick`.
+set mc_us(wait_for_login:wait_nick) 60
+
+# What's the maximum nickname length supported by the irc server the bot is
+# connecting to?
+#   Undernet uses: 9
+set mc_us(max_nick_length) 9
 
 # What raw numeric verifies that the bot is logged in?  This raw numeric must
 # be returned during the WHOIS reply, before end of whois.  Set this to "" if
@@ -77,15 +95,17 @@ set mc_us(verify_login) 330
 set mc_us(service_nick) "X"
 
 # What's the irc nickname of the service that will take part in channel
-# services?
+# services?  Unlike service_nick, this is the actual bot that you send requests
+# to for ops and such.  For Undernet, it's just 1 bot for both, X.  But dalnet
+# uses 2 different bots for this, see the example below.
 #   Undernet uses: X
 #   Dalnet uses:   ChanServ
 set mc_us(service_chan) "X"
 
 # Does the channel service ever join the channel?
 #  0 = no, 1 = yes
-#   Undernet uses 1
-#   Dalnet uses   0
+#   Undernet uses: 1
+#   Dalnet uses:   0
 set mc_us(service_chan_join) 1
 
 # How do you log into the service bot?
@@ -121,7 +141,6 @@ set mc_us(how_to_login) {
 set mc_us(do_after_login) {
   /raw MODE %botnick +x
   /msg X set invisible on
-  /msg X set maxlogins 3
 }
 
 # What do you want the bot to do up needing op/ unban/ invite/ limit/ key?
@@ -179,7 +198,7 @@ set mc_us(join_service) {
 set mc_us(ignore_service_flood) "x!cservice@undernet.org"
 
 
-## SVS Client (Script Version Service) v3.1.1 ##
+## SVS Client (Script Version Service) v3.2.1 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
 # there is a newer version of this script available.  This will only notify
 # users of the new version via a note.  It's up to the owner of the bot to
@@ -209,9 +228,9 @@ set mc_us(svs:mode) 0
 #Script:mc_us
 
 set mc_us(script)      "IRC Services"
-set mc_us(version)     "v1.0"
+set mc_us(version)     "v1.1"
 set mc_us(svs:script)  "irc_services"
-set mc_us(svs:version) "001000000000"
+set mc_us(svs:version) "001001000000"
 set mc_us(svs:server)  "mc.svs.purehype.net"
 set mc_us(svs:port)    "81"
 set mc_us(svs:get)     "/index.tcl"
@@ -275,13 +294,21 @@ proc mc:us:errchk {command arg} {
 
 setudef flag mc.irc_services
 
+if {![info exists mc_us(:cache:ignore_303)]} {
+  set mc_us(:cache:ignore_303) 0
+}
 
 foreach temp(bind) [binds mc:us:filt:status] {
   unbind [lindex $temp(bind) 0] [lindex $temp(bind) 1] [lindex $temp(bind) 2] \
     [lindex $temp(bind) 4]
 }
 set temp(bind) [lindex [binds *dcc:status] 0]
-bind filt [lindex $temp(bind) 1] .[lindex $temp(bind) 2] mc:us:filt:status
+if {$temp(bind) == ""} {
+  bind filt m|m .status mc:us:filt:status
+  proc *dcc:status {{args ""}} {}
+} else {
+  bind filt [lindex $temp(bind) 1] .[lindex $temp(bind) 2] mc:us:filt:status
+}
 proc mc:us:filt:status {index text} {
   return [mc:us:errchk mc:us:filt:status_ [list $index $text]]
 }
@@ -290,12 +317,12 @@ proc mc:us:filt:status_ {index text} {
   *dcc:status [idx2hand $index] $index $text
 
   putdcc $index "$mc_us(script) $mc_us(version), status"
-  putdcc $index [format {    %-14s: %s}  Login    $mc_us(login)]
+  putdcc $index [format {    %-14s: %s}  Username $mc_us(login)]
   putdcc $index [format {    %-14s: %s}  Password ******]
   set temp(1) [expr {$mc_us(wait_for_login)?"yes":"no"}]
   if {$temp(1) == "yes"} {
     if {!$mc_us(wait_for_login:timeout)} {
-      append temp(1) " (timeout: none)"
+      append temp(1) " (timeout: never)"
     } else {
       append temp(1) " (timeout: [duration $mc_us(wait_for_login:timeout)])"
     }
@@ -328,7 +355,9 @@ proc mc:us:evnt_ {type} {
               ($mc_us(:cache:nick) != "")} {
             set mc_us(:cache:nick) $nick
           }
-          set nick $mc_us(wait_for_login:nick)
+          set nik $mc_us(wait_for_login:nick)
+          while {[regexp -- {\?} $nik]} {regsub -- {\?} $nik [rand 10] nik}
+          set nick $nik
         }
         if {$mc_us(wait_for_login:nick) != $altnick} {
           if {![info exists mc_us(:cache:altnick)] ||
@@ -338,6 +367,9 @@ proc mc:us:evnt_ {type} {
           set altnick $mc_us(wait_for_login:nick)
         }
       }
+      catch {unset mc_us(:cache:ison_test)}
+      catch {unset mc_us(:cache:has_nick)}
+      set mc_us(:cache:ignore_303) 1
     }
 
     "init-server" {
@@ -387,6 +419,7 @@ foreach temp(bind) [binds mc:us:raw] {
 
 bind raw - $mc_us(verify_login) mc:us:raw
 bind raw - 221 mc:us:raw
+bind raw - 303 mc:us:raw
 bind raw - 318 mc:us:raw
 proc mc:us:raw {from keyword text} {
   return [mc:us:errchk mc:us:raw_ [list $from $keyword $text]]
@@ -394,21 +427,77 @@ proc mc:us:raw {from keyword text} {
 proc mc:us:raw {from keyword text} {
   global mc_us
   set text [split $text]
-  if {![isbotnick [lindex $text 1]] && ($keyword != "221")} {return 0}
-  if {![info exists mc_us(:cache:whois)]} {set mc_us(:cache:whois) 0}
+  if {![isbotnick [lindex $text 1]] && ($keyword != "221") &&
+      ($keyword != "303")} {return 0}
   if {$keyword == $mc_us(verify_login)} {set keyword "verify"}
   switch -- $keyword {
     221 {
       # botname +ix
-      set mc_us(:cache:umode) [lindex [split $text] 1]
+      set mc_us(:cache:umode) [lindex $text 1]
+    }
+    303 {
+      # Ison reply.
+      # botname :<current_nick> [nick1 [nick2 [nickN]]]
+
+      if {![info exists mc_us(:cache:ison_test)] ||
+           [info exists mc_us(:cache:has_nick)]} {return 0}
+      if {$mc_us(:cache:ignore_303)} {return 1}
+      set origional [lindex $text 1]
+      regexp -- {^:?(.*)$} $origional -> origional
+      global botnick
+      if {![isbotnick $origional]} {return 0}
+      set list [string tolower [lrange $text 2 end]]
+      set usable ""
+      foreach test_nick [lrange $mc_us(:cache:ison_test) 1 end] {
+        set ltest_nick [string tolower $test_nick]
+        if {[lsearch -exact $list $ltest_nick] == "-1"} {
+          set usable $test_nick
+          break
+        }
+      }
+
+      set temp(join_chan) "proceeding with join of channels"
+      if {$usable == ""} {
+        if {$mc_us(wait_for_login:wait_nick)} {
+          set temp() "trying again in $mc_us(wait_for_login:wait_nick) seconds"
+          putloglev o * "$mc_us(script): Usable nick not found, $temp()."
+          utimer $mc_us(wait_for_login:wait_nick) \
+            [list mc:us:list get_nick again]
+          set mc_us(:cache:ignore_303) 1
+          return 1
+        }
+        putloglev o * "$mc_us(script): Usable nick not found, $temp(join_chan)."
+      } else {
+        if {[string tolower $usable] != [string tolower $mc_us(:cache:nick)] &&
+         [string tolower $usable] != [string tolower $mc_us(:cache:altnick)]}  {
+          putserv "NICK $usable"
+        }
+        putloglev o * "$mc_us(script): Usable nick found, $temp(join_chan)."
+      }
+
+      global nick altnick
+      if {[info exists mc_us(:cache:nick)] && $mc_us(:cache:nick) != ""} {
+        set nick $mc_us(:cache:nick)
+      }
+      if {[info exists mc_us(:cache:altnick)] && $mc_us(:cache:altnick) != ""} {
+        set altnick $mc_us(:cache:altnick)
+      }
+
+      unset mc_us(:cache:ison_test)
+      set mc_us(:cache:has_nick) 1
+      set mc_us(:cache:ignore_303) 0
+
+      mc:us:list join_channels
+      return 1
     }
     318 {
-      # botname MC_8 :End of /WHOIS list.
-      mc:us:list verify $mc_us(:cache:whois)
+      # botname botname :End of /WHOIS list.
+      mc:us:list verify [expr {[info exists mc_us(:cache:whois)]?
+        $mc_us(:cache:whois):"0"}]
       set mc_us(:cache:whois) 0
     }
     verify {
-      # botname MC_8 mc8 :is logged in as
+      # botname botname username :is logged in as
       set mc_us(:cache:whois) 1
     }
   }
@@ -536,35 +625,68 @@ proc mc:us:list_ {command arg} {
           return 1
         }
         0 {
-          global nick altnick
-
-          if {$mc_us(wait_for_login:nick) != ""} {
-            if {[info exists mc_us(:cache:nick)] &&
-                ($mc_us(:cache:nick) != "")} {
-              set nick $mc_us(:cache:nick)
-            }
-            if {[info exists mc_us(:cache:altnick)] &&
-                ($mc_us(:cache:altnick) != "")} {
-              set altnick $mc_us(:cache:altnick)
+          if {$server == ""} {return}
+          if {$mc_us(wait_for_login)} {
+            if {$mc_us(wait_for_login:nick) != ""} {
+              mc:us:list get_nick
+            } else {
+              mc:us:list join_channels
             }
           }
-
-          if {[file exists $cache(file)]} {
-            set io [open $cache(file) r]
-            while {![eof $io]} {
-              gets $io channel
-              if {![validchan $channel] ||
-                  ![mc:us:chanflag $channel inactive]} {continue}
-              channel set $channel -inactive
-            }; close $io
-          }; close [open $cache(file) w]
         }
       }
     }
 
+    "get_nick" {
+      if {[info exists mc_us(:cache:has_nick)] ||
+          (($arg != "again") && [info exists mc_us(:cache:ison_test)])} {return}
+      global botnick
+      set end [expr $mc_us(max_nick_length)-1]
+      set list [list $botnick]
+      lappend list [string range $mc_us(:cache:nick) 0 $end]
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]
+      incr end -1
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]0
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]1
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]2
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]3
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]4
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]5
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]6
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]7
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]8
+      lappend list [string range $mc_us(:cache:altnick) 0 $end]9
+      set mc_us(:cache:ison_test) $list
+      putserv "ISON [join $mc_us(:cache:ison_test)]"
+      set mc_us(:cache:ignore_303) 0
+    }
+
+    "join_channels" {
+      global botnet-nick
+      set cache(file) ".cache.${botnet-nick}.irc_services"
+      if {[file exists $cache(file)]} {
+        set io [open $cache(file) r]
+        while {![eof $io]} {
+          gets $io channel
+          if {![validchan $channel] ||
+              ![mc:us:chanflag $channel inactive]} {continue}
+          channel set $channel -inactive
+        }; close $io
+      }; close [open $cache(file) w]
+    }
+
     "login_failed" {
       if {![mc:us:list is_logged_in] && ($server != "")} {
-        putlog "$mc_us(script): Login failed, proceeding with join of channels."
+        set message "Login failed"
+        if {$mc_us(wait_for_login)} {
+          if {$mc_us(wait_for_login:nick) != ""} {
+            append message ", finding usable nick"
+          } else {
+            append message ", joining channels"
+          }
+        }
+        append message "."
+        putlog "$mc_us(script): $message"
         mc:us:list wait 0
       }
     }
@@ -576,7 +698,16 @@ proc mc:us:list_ {command arg} {
         }
         1 {
           if {![mc:us:list is_logged_in]} {
-            putlog "$mc_us(script): Login verified."
+            set message "Login verified"
+            if {$mc_us(wait_for_login)} {
+              if {$mc_us(wait_for_login:nick) != ""} {
+                append message ", finding usable nick"
+              } else {
+                append message ", joining channels"
+              }
+            }
+            append message "."
+            putlog "$mc_us(script): $message"
           }
         }
       }
@@ -807,8 +938,8 @@ if {![mc:us:list is_logged_in]} {
 }
 
 
-## SVS v3.1.1
-set mc_us(svs:client_version) "v3.1.1"
+## SVS v3.2.1
+set mc_us(svs:client_version) "v3.2.1"
 if {![info exists mc_us(svs:mode)] ||
     ![regexp -- {^(1|0)$} $mc_us(svs:mode)]} {
   set mc_us(svs:mode) 0
@@ -825,7 +956,7 @@ proc mc:us:do_svs {{args ""}} {
 }
 
 proc mc:us:do_svs_ {svs_server svs_port svs_get} {
-  global mc_us tcl_platform
+  global mc_us
   if {[catch {
           socket -async $svs_server $svs_port
              } sid]} {
@@ -833,57 +964,12 @@ proc mc:us:do_svs_ {svs_server svs_port svs_get} {
     return 1
   }
 
-  # This block of code is to get a standard User-Agent line of information, as
-  # proposed in http://www.mozilla.org/build/revised-user-agent-strings.html
-  foreach array_name [list platform os osVersion machine] {
-    set temp($array_name) [lindex [array get tcl_platform $array_name] 1]
-  }
-  switch -- $temp(platform) {
-    windows {
-      switch -- $temp(os) {
-        Windows {set temp(2) Win$temp(osVersion)}
-        "Windows 95" {
-          if {$temp(osVersion) < "4.10"} {
-            set temp(2) Win95
-          } else {
-            set temp(2) Win98
-          }
-        }
-        "Windows 98" {set temp(2) Win98}
-        "Windows NT" {
-          if {$temp(osVersion) >= "5.0"} {
-            set temp(2) "Windows NT $temp(osVersion)"
-          } else {
-            set temp(2) WinNT$temp(osVersion)
-          }
-        }
-        default {
-          set temp(2) "$temp(os) $temp(osVersion)"
-        }
-      }
-    }
-    unix {
-      set temp(2) "unix $temp(machine)"
-    }
-    macintosh {
-      set temp(2) $temp(machine)
-    }
-    default {
-      set temp(2) "$temp(os) $temp(osVersion) $temp(machine)"
-    }
-  }
-  set temp(user_agent) "Mozilla/5.001 ($temp(platform); U; $temp(2); en) "
-  append temp(user_agent) "Gecko/25250101 $mc_us(svs:script)/"
-  append temp(user_agent) "$mc_us(svs:version) SVS_Client/"
-  append temp(user_agent) "$mc_us(svs:client_version)"
-  # ^
-
-  fconfigure $sid -blocking 0 -buffering line
-  set tout [after 60000 "mc:us:svs_talk $sid timeout $svs_server $svs_port"]
+  fconfigure $sid -blocking 1 -buffering line
+  set tout \
+    [after 60000 "mc:us:svs_talk $sid timeout $svs_server $svs_port"]
   fileevent $sid readable "mc:us:svs_talk $sid $tout"
   puts $sid "GET $svs_get?$mc_us(svs:query) HTTP/1.0\
-           \nHost: $svs_server:$svs_port\
-           \nUser-Agent: $temp(user_agent)\n"
+           \nHost: $svs_server:$svs_port\n"
   flush $sid
 }
 
@@ -918,7 +1004,8 @@ proc mc:us:svs_talk {sid tout {svs_server ""} {svs_port ""}} {
       set temp(port) [lindex $get 2]
       set temp(get) [lindex $get 3]
       set temp(cache) "$temp(host) at $temp(port)"
-      putloglev d * "$mc_us(script): SVS is being redirected to $temp(cache)."
+      putloglev d * \
+        "$mc_us(script): SVS is being redirected to $temp(cache)."
       mc:us:do_svs_ $temp(host) $temp(port) $temp(get)
       close $sid
       return 200
@@ -987,8 +1074,7 @@ proc mc:us:svs_talk {sid tout {svs_server ""} {svs_port ""}} {
 }
 ## ^
 
-
-putlog "$mc_us(script) $mc_us(version) by MC_8 loaded."
+putloglev * o "$mc_us(script) $mc_us(version) by MC_8 loaded."
 
 #
 ##
@@ -996,26 +1082,40 @@ putlog "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1 (02.12.03)
+#  MC_8 -            - Upgraded SVS Client, made it smaller. v3.1.1 -> v3.2.1
+#  MC_8 -            - Added `wait_for_login:wait_nick` variable.
+#  MC_8 - Viscus   \ - Fixed 'invalid command name "validchan"' upon '.restart'.
+#         reed         Bugzilla Bug 193
+#  MC_8 - guppy    \ - Script will now do it's own checking to find a suitable
+#         BarkerJr     nickname.  Before, if $altnick and $nick were taken upon
+#                      becoming logged into the service, the
+#                      `wait_for_login:nick` would just stay as the bot's nick.
+#                      The script will now try and emulate the way eggdrop does
+#                      it upon logging in, if nick is taken, try altnick, if
+#                      altnick is taken, try altnick[0-9] and so on.
+#                      Bugzilla Bug 224
+#  MC_8 -            - Added `max_nick_length` variable.
+#
 # v1.0 (12.16.02)
-#; MC_8  - reed     - Added option 0 to `wait_for_login:timeout` configuration
-#;                    variable.  [bug: 216]
-#; MC_8  - guppy    - Having bot change it's nick back to normal nick before it
-#;                    joins the channels even if not logged in.  [bug: 214]
-#;         reed
-#; MC_8  - Ghislain - Added `service_chan_join` configuration variable to
-#;                    support IRC networks that do not have there service join
-#;                    the channel (like dalnet).  [bug: 212]
-#; MC_8  - Ghislain - Added better support for IRC networks other than Undernet.
-#;                    [bug: 205]
-#; MC_8  - x        - 'waiting 10 seconds' now actually waits 10 seconds.
-#;                    [bug: 204]
-#; MC_8  - blood_x  - Fixed order of login verified.  `do_after_login` now runs
-#;         Bates      before the channel join.  [bug: 194]
-#;         Reed
-#;         BarkerJr
-#; MC_8  -          - Added `join_service` configuration variable.
-#; MC_8  - Xtr      - Added `service_nick` and `service_chan` configuration
-#;                    variables.
+#  MC_8  - reed     - Added option 0 to `wait_for_login:timeout` configuration
+#                     variable.  [bug: 216]
+#  MC_8  - guppy    - Having bot change it's nick back to normal nick before it
+#          reed       joins the channels even if not logged in.  [bug: 214]
+#  MC_8  - Ghislain - Added `service_chan_join` configuration variable to
+#                     support IRC networks that do not have there service join
+#                     the channel (like dalnet).  [bug: 212]
+#  MC_8  - Ghislain - Added better support for IRC networks other than Undernet.
+#                     [bug: 205]
+#  MC_8  - x        - 'waiting 10 seconds' now actually waits 10 seconds.
+#                     [bug: 204]
+#  MC_8  - blood_x  - Fixed order of login verified.  `do_after_login` now runs
+#          Bates      before the channel join.  [bug: 194]
+#          Reed
+#          BarkerJr
+#  MC_8  -          - Added `join_service` configuration variable.
+#  MC_8  - Xtr      - Added `service_nick` and `service_chan` configuration
+#                     variables.
 #  MC_8  - guppy    - Added `wait_for_login:nick` configuration variable.
 #          Dopsy      [Bug: 191]
 #  MC_8  -          - Script has been re coded in such a way that it can be used
