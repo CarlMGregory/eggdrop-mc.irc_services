@@ -1,5 +1,5 @@
 ##
-# IRC Services v1.1.8
+# IRC Services v1.1.10
 #  by MC_8 - Carl M. Gregory <mc8@purehype.net>
 #  This script will only run on eggdrop 1.6.14 or greater.
 #
@@ -9,6 +9,8 @@
 # Have a bug?  http://mc.purehype.net/bugzilla/
 ##
 
+##
+# Description
 ##
 # This will allow your bot to interface with an IRC servers' channel services.
 # This should work fine with QuakeNet/ Dalnet/ Undernet and probably others.
@@ -23,6 +25,72 @@
 #      below, assuming your using the default command already in place.  You
 #      don't need to give the bot that high of access if you intend to never use
 #      that variable's default command.
+##
+
+##
+# Installation
+##
+# Step 1:
+#   Read from the top of this script all the way down to where it says to
+#   'Edit no further, tcl coding below.'.  At the very bottom of this script is
+#   the history section, if you want to see what's changed from version to
+#   version.
+#
+#   Lines that begin with a # (pound sign) are considered comments, the way
+#   of giving the user, you, information within a script such as this.  You
+#   don't have to mess with lines that are "commented" because it's only
+#   informational and not used by the script in it's functionality.
+#
+#   Configure things that need to be configured.  Lines that begin with 'set'
+#   are considered configurable variables for you to change as needed.  As to
+#   what you should set that variable to, read the comment lines before it.  A
+#   set is structured in 2 ways.
+#   Single line:
+#     set Configuration_name "You change this"
+#   Multi line:
+#     set Configuration_name {
+#       You change this.
+#       And this too.
+#     }
+#   In both examples, 'Configuration_name' should never be changed, only what
+#   comes after it.  In the single line example, the "" (quotes) should be used
+#   at all times (unless you know TCL).
+#
+#   For single line configuration variable values, you must escape special
+#   characters.  But for multi line configuration variable values, you do not
+#   escape special characters, unless told otherwise in the commented lines
+#   above it.
+#   Special characters are any of: ], [, $, ", }, and {
+#   What does it mean to escape one of these special characters?
+#   To escape something in TCL is to put a \ (back slash) before that character.
+#   Example:
+#     set Configuration name "You change \"this\"."
+#   The example will actually be set correctly (as: You change "this".), but so
+#   it doesn't interfere with TCL parsing you must escape it.
+#
+# Step 2:
+#   Ok, step 1 is usually the hard part.  Reading and setting the script's
+#   configuration as you need.
+#
+#   Now, you must load the script into your eggdrop bot.
+#   Ensure the configured script is on the same computer the eggdrop runs, then
+#   put this line near the bottom of the eggdrop's configuration file:
+#     source scripts/filename.tcl
+#   Or maybe it's located somewhere other than the scripts directory within the
+#   eggdrop directory:
+#     source /full/path/to/filename.tcl
+#
+#   Cool, now it's in the configuration file, just do '.rehash' within dcc chat
+#   with your eggdrop.  You should see that it either loaded or didn't on the
+#   screen after you type that rehash command.
+#
+# Note:
+#   To remove a script, or unload a script, from eggdrop you simply remove the
+#   'source' of that script from eggdrop's configuration file then do the
+#   '.restart' command in dcc chat with the bot.  You have to do a .restart,
+#   .rehash will not do it.  Rehash reloads everything, but does not clear
+#   memory before hand.  Restart clears the memory then reloads everything,
+#   hence clearing the script from memory.
 ##
 
 ##
@@ -116,6 +184,10 @@ set mc_us(:config:service_chan_join) 1
 #     /raw <code>               - Sends the raw code to the irc server.
 #     /msg <nick> <message>     - Sends <nick> a <message> private message.
 #     /notice <nick> <message>  - sends <nick> a <message> via notice.
+#     /tcl <coding>
+#       This is for users that are somewhat failure with the TCL language, for a
+#       somewhat more advanced way of process commands.  In addition to /tcl, I
+#       have made tcl commands out of /msg, /notice, and /raw.
 #   Valid replacement variables are:
 #     %username   - The username, set above.
 #     %password   - The password, set above.
@@ -133,6 +205,10 @@ set mc_us(:config:how_to_login) {
 #     /raw <code>               - Sends the raw code to the irc server.
 #     /msg <nick> <message>     - Sends <nick> a <message> private message.
 #     /notice <nick> <message>  - sends <nick> a <message> via notice.
+#     /tcl <coding>
+#       This is for users that are somewhat failure with the TCL language, for a
+#       somewhat more advanced way of process commands.  In addition to /tcl, I
+#       have made tcl commands out of /msg, /notice, and /raw.
 #   Valid replacement variables are:
 #     %username   - The username, set above.
 #     %password   - The password, set above.
@@ -151,6 +227,10 @@ set mc_us(:config:do_after_login) {
 #     /raw <code>               - Sends the raw code to the irc server.
 #     /msg <nick> <message>     - Sends <nick> a <message> private message.
 #     /notice <nick> <message>  - sends <nick> a <message> via notice.
+#     /tcl <coding>
+#       This is for users that are somewhat failure with the TCL language, for a
+#       somewhat more advanced way of process commands.  In addition to /tcl, I
+#       have made tcl commands out of /msg, /notice, and /raw.
 #   Valid replacement variables are:
 #     %username   - The username, set above.
 #     %password   - The password, set above.
@@ -181,6 +261,10 @@ set mc_us(:config:need:key) {
 #     /raw <code>               - Sends the raw code to the irc server.
 #     /msg <nick> <message>     - Sends <nick> a <message> private message.
 #     /notice <nick> <message>  - sends <nick> a <message> via notice.
+#     /tcl <coding>
+#       This is for users that are somewhat failure with the TCL language, for a
+#       somewhat more advanced way of process commands.  In addition to /tcl, I
+#       have made tcl commands out of /msg, /notice, and /raw.
 #   Valid replacement variables are:
 #     %username   - The username, set above.
 #     %password   - The password, set above.
@@ -205,7 +289,7 @@ set mc_us(:config:ignore_service_flood) "x!cservice@undernet.org"
 # whatever you 'set botnet-nick' to in the eggdrop configuration file.
 set mc_us(:config:cache_file) ".cache.${botnet-nick}.irc_services"
 
-## SVS Client (Script Version Service) v4.1.1 ##
+## SVS Client (Script Version Service) v4.1.2 ##
 # Once a day, the SVS Client will connect to MC_8's SVS Server to determine if
 # there is a newer version of this script available.  If a newer version is
 # found, the script will be auto updated.
@@ -234,11 +318,11 @@ foreach {temp(name) temp(value)} [array get mc_us :config:*] {
 set mc_us(info:loc) [info script]
 array set mc_us [list \
   script                 "IRC Services" \
-  version                "v1.1.8" \
+  version                "v1.1.10" \
   svs:script             "irc_services" \
-  svs:version            "001001008000" \
-  svs:client_version     "v4.1.1" \
-  svs:client_svs_version "004001001000" \
+  svs:version            "001001010000" \
+  svs:client_version     "v4.1.2" \
+  svs:client_svs_version "004001002000" \
   svs:server             "mc.svs.purehype.net" \
   svs:port               "80" \
   svs:get                "/index.tcl"]
@@ -247,7 +331,7 @@ append mc_us(svs:query) "version=$mc_us(svs:version)&"
 append mc_us(svs:query) \
   "svs_version=$mc_us(svs:client_svs_version)"
 
-if {![info exists numversion] || 
+if {![info exists numversion] ||
     ([string range $numversion 0 4] < "10614") ||
     (([string range $numversion 0 4] == "10614") &&
      ([string range $numversion 5 6] != "00"))} {
@@ -265,19 +349,19 @@ if {![info exists numversion] ||
 
 # Error Catching System (ECS), v4.1.
 proc mc:us:errchk {command args} {
-  
+
   # Enable (1) or disable (0) auto reporting of bugs to mc8@purehype.net.
   # This setting here for those who want to disable it in fear of privacy
   # violations.
   set enable_auto_reporting 1
-  
+
   if {![info exists ::lastCommand]} {set ::lastCommand [list]}
   set ::lastCommand \
     "[list [list [clock seconds] $command $args]] $::lastCommand"
   set ::lastCommand [lrange $::lastCommand 0 4]
   if {![catch {eval $command $args} return]} {return $return}
   if {$::errorCode == "mc.ecs.done"} {return -errorcode mc.ecs.done -code error}
-  
+
   set temp(lastbind) [expr {[info exists ::lastbind]?$::lastbind:"-NULL-"}]
   set temp(eversion) [expr {[info exists ::version]?$::version:"-NULL-"}]
   set message "
@@ -300,13 +384,13 @@ proc mc:us:errchk {command args} {
     append message "\n        $line"
   }
   append message "\n    --------------"
-  
+
   set message [lrange [split $message \n] 1 end]
   set offset [string first * [lindex $message 0]]
   set new_message [list]
   foreach line $message {lappend new_message [string range $line $offset end]}
   set message $new_message
-  
+
   if {!$enable_auto_reporting ||
       [catch {socket -async mc.purehype.net 80} sid]} {
     foreach line $message {putloglev o * $line}
@@ -328,10 +412,10 @@ proc mc:us:errchk {command args} {
   lappend query "Server  : [expr {[info exists ::server]?$::server:""}]"
   lappend query "Channels: [join [lsort -dictionary [channels]] ", "]"
   lappend query ""
-  
+
   foreach line $message {lappend query $line}
   lappend query "************************************"
-  
+
   set new_query [list]
   foreach line $query {
     regsub -all -- "(\002|\017|\026|\037)" $line "" line
@@ -344,7 +428,7 @@ proc mc:us:errchk {command args} {
       incr i -1
     }; lappend new_query $line
   }; set query $new_query
-  
+
   set query "message=[join $query %0a]"
   puts $sid "POST /report_bug.tcl HTTP/1.0\
            \nHost: mc.purehype.net:80\
@@ -359,7 +443,7 @@ proc mc:us:errchk {command args} {
   putloglev o * "report. You can check the status of your bug, as soon as MC_8"
   putloglev o * "adds it, at http://mc.purehype.net/bugzilla/ ."
   putloglev o * "************************************"
-  
+
   return -errorcode mc.ecs.done -code error
 }
 # ^
@@ -377,17 +461,48 @@ foreach temp(module) [list channels server irc] {
       set temp() "$mc_us(script) $mc_us(version)"
       putloglev o * \
         "$temp() by MC_8 cannot load $temp(module) module, script load halted."
-      putloglev o * "$temp()  loadmodule error; $output"
+      putloglev o * "$temp() loadmodule error; $output"
       return 1
     }
   }
 }
 
+foreach {temp(a) temp(b)} [list\
+  login                    ""\
+  password                 ""\
+  wait_for_login:timeout   60\
+  wait_for_login:nick      z\
+  wait_for_login:wait_nick 60\
+  max_nick_length          9\
+  verify_login             330\
+  service_nick             X\
+  service_chan             X\
+  how_to_login         "/msg x@channels.undernet.org login %username %password"\
+  do_after_login           "/raw MODE %botnick +x\n/msg X set invisible on"\
+  need:op         "/msg X unban %channel %botnick\n/msg X op %channel %botnick"\
+  need:unban           "/msg X unban %channel %botnick\n/msg X invite %channel"\
+  need:invite              "/msg X invite %channel"\
+  need:limit               "/msg X invite %channel"\
+  need:key                 "/msg X invite %channel"\
+  join_service             "/msg X join %channel"\
+  ignore_service_flood     "x!cservice@undernet.org"\
+  cache_file               ".cache.${botnet-nick}.irc_services"] {
+  if {![info exists mc_us(:config:$temp(a))]} {
+    set mc_us(:config:$temp(a)) $temp(b)
+  }
+}
+if {![info exists mc_us(:config:wait_for_login)] ||
+    ![string match {[01]} $mc_us(:config:wait_for_login)]} {
+  set mc_us(:config:wait_for_login) 0
+}
+if {![info exists mc_us(:config:service_chan_join)] ||
+    ![string match {[01]} $mc_us(:config:service_chan_join)]} {
+  set mc_us(:config:service_chan_join) 1
+}
+
 setudef flag mc.irc_services
 
-if {![info exists mc_us(:cache:ignore_303)]} {
-  set mc_us(:cache:ignore_303) 0
-}
+if {![info exists mc_us(:cache:ignore_303)]} {set mc_us(:cache:ignore_303) 0}
 
 foreach temp(bind) [binds mc:us:filt:status] {
   unbind [lindex $temp(bind) 0] [lindex $temp(bind) 1] [lindex $temp(bind) 2] \
@@ -442,7 +557,7 @@ proc mc:us:evnt_ {type} {
       global nick altnick
 
       if {$mc_us(:config:wait_for_login:nick) != ""} {
-        
+
         if {![info exists mc_us(:cache:nick)] ||
             ($mc_us(:cache:nick) == "")} {
           set mc_us(:cache:nick) $nick
@@ -452,7 +567,7 @@ proc mc:us:evnt_ {type} {
           while {[regsub -- {\?} $nik [rand 10] nik]} {}
           set nick $nik
         }
-        
+
         if {![info exists mc_us(:cache:altnick)] ||
             ($mc_us(:cache:altnick) == "")} {
           set mc_us(:cache:altnick) $altnick
@@ -460,7 +575,7 @@ proc mc:us:evnt_ {type} {
         if {$mc_us(:config:wait_for_login:nick) != $altnick} {
           set altnick $mc_us(:config:wait_for_login:nick)
         }
-        
+
       }
       catch {unset mc_us(:cache:ison_test)}
       catch {unset mc_us(:cache:has_nick)}
@@ -481,6 +596,8 @@ proc mc:us:evnt_ {type} {
     }
 
     "disconnect-server" {
+      set mc_us(:cache:last_message) ""
+
       mc:us:list wait 0
       mc:us:list is_logged_in 0
     }
@@ -725,7 +842,11 @@ proc mc:us:list_ {command arg} {
                 channel set $channel +inactive
                 puts $io $channel
               }
-            }; close $io
+            }
+            if {[catch {close $io} error]} {
+              set temp() "$mc_us(:config:cache_file): $error"
+              putloglev o * "$mc_us(script): WARNING, cannot close $temp()"
+            }
           }
 
           if {$mc_us(:config:wait_for_login:timeout)} {
@@ -878,40 +999,61 @@ proc mc:us:list_ {command arg} {
 
       set temp(uhost) [getchanhost $botnick]
 
+      set message [mc:us:replace -- $message [list \
+        %username $mc_us(:config:login) \
+        %password $mc_us(:config:password) \
+        %botnick  $botnick \
+        %uhost    $temp(uhost) \
+        %channel  $channel]]
+
       foreach temp(line) [split $message \n] {
         set temp(line) [string trim $temp(line) " \t"]
-        if {$temp(line) == ""} {continue}
+        if {($temp(line) == "") || [string match #* $temp(line)]} {continue}
         set temp(line) [split $temp(line)]
+
         switch -- [lindex $temp(line) 0] {
+
           "/msg" {
             mc:us:unlist $temp(line) command nick args
-            set args "PRIVMSG $nick :[join $args]"
+            putserv "PRIVMSG $nick :[join $args]"
           }
+
           "/notice" {
             mc:us:unlist $temp(line) command nick args
-            set args "NOTICE $nick :[join $args]"
+            putserv "PRIVMSG $nick :[join $args]"
           }
+
+          "/tcl" {
+            mc:us:unlist $temp(line) command args
+            set data [join $args]
+
+            if {[catch {uplevel #0 "eval {$data}"} error]} {
+              putloglev d * "$mc_us(script): \[Error\] TCL: $error"
+            }
+          }
+
           "/raw" {
             mc:us:unlist $temp(line) command args
-            set args [join $args]
+            ptuserv [join $args]
           }
+
           default {
             set temp(a) "Invalid command ([lindex $temp(line) 0])"
             putloglev o * "$mc_us(script): $temp(a); [join $temp(line)]"
             continue
           }
+
         }
-        set args [mc:us:replace -- $args [list \
-          %username $mc_us(:config:login) \
-          %password $mc_us(:config:password) \
-          %botnick  $botnick \
-          %uhost    $temp(uhost) \
-          %channel  $channel]]
-        putserv $args
       }
     }
 
   }
+}
+
+foreach temp(command) [list /msg /notice /raw] {
+  proc $temp(command) {{args ""}} "
+    mc:us:list process_message \[list \"\" \"$temp(command) \[join \$args\]\"\]
+  "
 }
 
 
@@ -1071,7 +1213,7 @@ proc mc:us:do_svs {{args ""}} {
 proc mc:us:svs_memory {action} {
   global mc_us
   switch -- $action {
-    
+
     "setup" {
       upvar index index
       foreach _item [list header memory rfc_memory] {
@@ -1079,7 +1221,7 @@ proc mc:us:svs_memory {action} {
         set $_item [list svs $_item $index]
       }
     }
-    
+
     "remove" {
       upvar index index
       mc:us:svs_memory setup
@@ -1130,25 +1272,25 @@ proc mc:us:svs_talk {index text} {
       set mc_us($rfc_memory:[string index $rfc end]) $text
       return 0
     }
-      
+
     012 {
       if {$mc_us(:config:svs:enable)} {return 0}
       set mc_us($rfc_memory:[string index $rfc end]) $text
       return 0
     }
-    
+
     013 {
       if {$mc_us(:config:svs:enable)} {return 0}
       set mc_us($rfc_memory:[string index $rfc end]) $text
       return 0
     }
-    
+
     014 {
       if {$mc_us(:config:svs:enable)} {return 0}
       set mc_us($rfc_memory:[string index $rfc end]) $text
       return 0
     }
-    
+
     017 {
       if {$mc_us(:config:svs:enable)} {return 0}
       if {$text == ""} {
@@ -1169,7 +1311,7 @@ proc mc:us:svs_talk {index text} {
         mc:us:svs_memory remove
         return 1
       }
-        
+
       if {[info exists mc_us($memory)]} {
         set file $mc_us(info:loc)~new
         set temp(vars) $mc_us(info:vars)
@@ -1236,7 +1378,7 @@ proc mc:us:svs_talk {index text} {
           if {[info exists upvar_temp(svs_return)]} {
             set temp(return_code) [lindex $upvar_temp(svs_return) 0]
             set temp(return_arg) [lindex $upvar_temp(svs_return) 1]
-            
+
             if {!$temp(return_code)} {
               file delete -force -- $file~new
               set temp() "message from new version: $temp(return_arg)"
@@ -1290,7 +1432,11 @@ catch {unset index}
 if {![info exists mc_loaded]} {set mc_loaded(scripts) [list]}
 if {![array exists mc_loaded]} {unset mc_loaded; set mc_loaded(scripts) [list]}
 set index [lsearch -exact $mc_loaded(scripts) mc_us]
-set mc_loaded(scripts) [lreplace $mc_loaded(scripts) $index $index mc_us]
+if {$index == "-1"} {lappend mc_loaded(scripts) mc_us} \
+else {
+  set mc_loaded(scripts) \
+    [lreplace $mc_loaded(scripts) $index $index mc_us]
+}
 ## ^
 
 putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
@@ -1301,6 +1447,26 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 ##
 # History  ( <Fixed by> - [Found by] - <Info> )
 ##
+# v1.1.10 (11.24.03)
+#  MC_8 - ECS      - Error 'no space left on device' and 'disk quota exceeded'
+#                    will no longer be displayed as an error, rather a warning
+#                    no space left on device: hard drive is too full
+#                    disk quota exceeded    : hard drive quota exceeded
+#                    Bugzilla Bug 363
+#                    Bugzilla Bug 366
+#  MC_8 - amerce   - Added /tcl command to all command set's.
+#                    Bugzilla Bug 361
+#  MC_8 -          - Resetting 'last said' upon disconnect-server.
+#                    Bugzilla Bug 350
+#  MC_8 - Soul_Dr` - Upgraded SVS client.  v4.1.1 -> v4.1.2
+#                    Fixes list formatting while using tcl < 8.0.
+#
+# v1.1.9 (09.05.03)
+#  MC_8 - ECS - Added catch to default variables users commented out.  Users
+#               should comment variables out, rather set it correctly ... but I
+#               suppose they do for some reason.
+#               Bugzilla Bug 341
+#
 # v1.1.8 (09.04.03)
 #  MC_8 - ECS - Fixed 'syntax error in expression "catch ...'.
 #
@@ -1315,9 +1481,9 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 #               Re: http://www.eggheads.org/bugzilla/show_bug.cgi?id=251
 #  MC_8 -     - Upgraded SVS client.  v4.0.4 -> v4.1.1
 #  MC_8 - ECS - Created configuration variable `cache_file`.
-#               Bugzilla Bug 336 
+#               Bugzilla Bug 336
 #  MC_8 - ECS - Fixed 'no such channel record'.
-#               Bugzilla Bug 337 
+#               Bugzilla Bug 337
 #
 # v1.1.5 (08.29.03)
 #  MC_8 - - If a connection to an irc server fails (or you do a .jump in the
@@ -1345,10 +1511,10 @@ putloglev o * "$mc_us(script) $mc_us(version) by MC_8 loaded."
 #                        This wouldn't happen every time, only if nick or
 #                        altnick were not in use. Related to settings
 #                        `wait_for_login` and `wait_for_login:nick`.
-#                        Bugzilla Bug 335 
+#                        Bugzilla Bug 335
 #  MC_8 - Predator     - Fixed 'can't read "mc_us(:cache:altnick)": no such
 #                        element in array'.
-#                        Bugzilla Bug 331 
+#                        Bugzilla Bug 331
 #
 # v1.1.3 (05.01.03)
 #  MC_8 - blood_x - Fixed bug 'wrong # args: should be "killutimer timerID"'.
